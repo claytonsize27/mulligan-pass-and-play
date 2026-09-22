@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+ <meta name="theme-color" content="#183c32"><meta name="description" content="A mobile golf card game for two to four friends. Pass the phone, plan a shot, and swing together.">
+ <title>Mulligan · Pass & play</title>
+ <link rel="icon" href="./icon.svg" type="image/svg+xml"><link rel="manifest" href="./manifest.webmanifest"><link rel="stylesheet" href="./style.css">
+</head>
+<body>
+ <header class="topbar"><a class="brand" href="./" aria-label="Mulligan home"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M10 27V5l15 5-15 6"/><path d="M4 27h17"/></svg>Mulligan<span>Pass & play</span></a><button class="quiet" id="help-button">How to play</button></header>
+ <main id="app" tabindex="-1"></main><p id="notice" role="status" aria-live="polite"></p>
+ <dialog id="help"><div class="dialog-head"><h2>A little golf. A little mischief.</h2><button id="close-help" aria-label="Close rules">Close</button></div>
+ <p>Two to four players. One phone. Plan in private, then swing together.</p>
+ <ol><li><strong>Choose two different cards.</strong> Use one as your club and the other as an action. Each physical card has both faces, but you can only use one face at a time.</li><li><strong>Pick a target.</strong> Help yourself or interfere with another player. Lock your shot and pass the phone.</li><li><strong>Reveal together.</strong> When everyone has chosen, see all shots. Pass the phone once more so each player can use a Mulligan to cancel an action or an earlier cancellation.</li><li><strong>Swing.</strong> All shots resolve together. Your hand refills to eight. Keep going until everyone finishes, then move to the next hole. Lowest total strokes wins; ties share the win.</li></ol>
+ <h3>Getting to the hole</h3><p>Driver is for your first shot only. Land exactly on the hole to finish, or get within 25 yards and use a 1-Putt next time. 1-Putt ignores all actions. Overshooting leaves you the excess distance to play back toward the hole.</p>
+ <h3>Special cards</h3><p>Gold “Play now” cards work before you lock a shot. Dig exchanges cards, Borrow lets you choose a card from another hand, and Read the lie reveals a locked shot. Mulligan works during the reaction pass. None can be used as a face-down action.</p>
+ <p>If you need a new hand, take a practice swing: exchange your hand instead of playing a shot, at the cost of one stroke. Each hole has a 12-shot limit; unfinished players pick up at at least par +8.</p>
+ <details><summary>House edition: what is reconstructed?</summary><p>The official deck has 104 club/action cards. This edition uses verified card examples and simultaneous play, with an inferred card distribution, eight-card hands, stroke-play scoring, deterministic stacking (yard adjustments, then halving), and fixed reaction windows for a shared phone. Clear fairway, Read the lie, and the specific Mulligan cancellation rule are house implementations. This is an independent adaptation, not an official digital release.</p><p>Read <a href="./docs/RULES.md" target="_blank" rel="noopener">the rules and source notes</a> for the complete distinction.</p></details>
+ <h3>Save & install</h3><p>Your round saves on this browser after each move. Reloading covers private hands. Use your mobile browser’s “Add to Home Screen” or “Install app” menu. After the first full load, the game can work offline. Clearing browser data erases local saves. Saves do not sync between phones.</p>
+ <p class="source-links"><a href="https://www.youtube.com/watch?v=FUNdEoj1zfA" target="_blank" rel="noopener">Official introduction</a><a href="https://www.youtube.com/watch?v=GpVoduxbgHQ" target="_blank" rel="noopener">Official tutorial</a><a href="https://mulligancardgame.com/" target="_blank" rel="noopener">Original game</a></p>
+ </dialog>
+ <noscript>This game needs JavaScript enabled. It runs entirely in your browser.</noscript><script type="module" src="./src/app.js"></script>
+</body></html>

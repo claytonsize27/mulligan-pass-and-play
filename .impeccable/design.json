@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-22T21:34:57.9336403Z",
+  "title": "Design System: Mulligan",
+  "extensions": {
+    "shadows": [
+      {
+        "name": "selected-control",
+        "value": "0 2px 5px #183c3215",
+        "purpose": "Selected player-count segment"
+      },
+      {
+        "name": "status",
+        "value": "0 6px 24px #183c3240",
+        "purpose": "Status notice"
+      }
+    ],
+    "motion": [
+      {
+        "name": "shared-reveal",
+        "value": "0.5s ease-out",
+        "purpose": "Results clip reveal; disabled with reduced motion"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "760px"
+      },
+      {
+        "name": "wide",
+        "value": "900px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Commit or advance the game",
+      "html": "<button class=\"ds-primary\">Lock shot &amp; pass</button>",
+      "css": ".ds-primary{font:650 16px system-ui;min-height:48px;padding:12px 18px;border:0;border-radius:8px;background:var(--ink,#183c32);color:var(--white,#fffdf7)}.ds-primary:hover{filter:brightness(.94)}.ds-primary:focus-visible{outline:3px solid var(--accent,#b94e2d);outline-offset:4px}.ds-primary:disabled{opacity:.45}"
+    },
+    {
+      "name": "Quiet button",
+      "kind": "button",
+      "description": "Secondary navigation",
+      "html": "<button class=\"ds-quiet\">Cover hand</button>",
+      "css": ".ds-quiet{font:650 16px system-ui;min-height:48px;padding:12px 18px;border:1px solid var(--line,#c9cdbf);border-radius:8px;background:transparent;color:var(--ink,#183c32)}.ds-quiet:hover{filter:brightness(.94)}.ds-quiet:focus-visible{outline:3px solid var(--accent,#b94e2d);outline-offset:4px}"
+    },
+    {
+      "name": "Player input",
+      "kind": "input",
+      "description": "Player name field",
+      "html": "<input class=\"ds-input\" aria-label=\"Player name\" value=\"Player 1\"/>",
+      "css": ".ds-input{font:16px system-ui;min-height:48px;padding:12px;border:1px solid var(--line,#c9cdbf);border-radius:6px;background:var(--white,#fffdf7);color:var(--ink,#183c32)}.ds-input:focus-visible{outline:3px solid var(--accent,#b94e2d);outline-offset:4px}"
+    },
+    {
+      "name": "Player badge",
+      "kind": "chip",
+      "description": "Number plus color identifies each player",
+      "html": "<span class=\"ds-badge\">1</span>",
+      "css": ".ds-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#235b88;color:white;font:700 .8rem system-ui}"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "description": "Two exclusive faces of one physical card",
+      "html": "<article class=\"ds-card\"><strong>Hybrid</strong><p>200 <small>yd</small></p><hr/><strong>Rough</strong><div>Take 50 yd off the target’s shot.</div></article>",
+      "css": ".ds-card{padding:16px;border:1px solid #b9c4b7;border-radius:14px;background:var(--white,#fffdf7);color:var(--ink,#183c32);font:14px system-ui;width:180px}.ds-card p{font:400 2.7rem Georgia;margin:12px 0}.ds-card small{font:13px system-ui}.ds-card hr{border:0;border-top:1px solid var(--line,#c9cdbf)}.ds-card div{font-size:12px;line-height:1.45;margin-top:8px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The golf scorebook",
+    "overview": "Warm paper, evergreen ink and clear dual-face cards for shared-phone play.",
+    "keyCharacteristics": [
+      "Private handoffs",
+      "Large club distances",
+      "Compact mobile planning"
+    ],
+    "rules": [
+      {
+        "name": "Private hand rule",
+        "body": "Never render another player’s hidden hand on a shared screen.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Pair player color with a number",
+      "Preserve focus on selection"
+    ],
+    "donts": [
+      "Do not add external font dependencies"
+    ]
+  }
+}
