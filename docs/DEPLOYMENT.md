@@ -2,7 +2,11 @@
 
 ## Current status
 
-Repository created at https://github.com/claytonsize27/mulligan-pass-and-play. GitHub Pages deployment is configured by the included workflow; check its latest successful run for live status. Expected site address: https://claytonsize27.github.io/mulligan-pass-and-play/.
+**Live:** https://claytonsize27.github.io/mulligan-pass-and-play/
+
+**Source:** https://github.com/claytonsize27/mulligan-pass-and-play
+
+GitHub Pages is enabled with GitHub Actions. The initial deployment succeeded: https://github.com/claytonsize27/mulligan-pass-and-play/actions/runs/35787653096. Public mobile gameplay was verified after deployment.
 
 ## Cost basis
 
@@ -10,7 +14,7 @@ Repository created at https://github.com/claytonsize27/mulligan-pass-and-play. G
 
 ## Preferred automated route
 
-Once GitHub access is connected, create a public repository named `mulligan-pass-and-play`, push this project, set Pages source to **GitHub Actions**, and run the included `Deploy Pages` workflow. This is the only external account step left for the agent to perform. The workflow tests first, packages only `dist/`, and publishes through GitHub's Pages actions. It does not publish `.firecrawl/`, local game saves, or repository internals.
+Publishing is already configured. Future pushes to main automatically run the 16 tests, package only dist/, and publish through GitHub Pages. Research downloads, local game saves and repository internals are excluded. The GitHub connector could read the repository but could not write Git trees; authenticated Git via the installed credential manager successfully pushed the source. Browser sign-in was used only for repository creation and Pages settings.
 
 ## Manual fallback
 
@@ -32,5 +36,6 @@ Any HTTPS static host can serve the contents of `dist/`. No server-side rewrites
 - If state schema changes, add a migration or bump save version/key and explain the reset.
 - Confirm public URL and repository subpath behavior after deployment.
 - Confirm install/offline behavior on actual iOS Safari and Android Chrome (desktop emulation is not equivalent to those devices).
+
 
 

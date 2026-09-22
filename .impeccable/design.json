@@ -86,12 +86,7 @@
         "section": "components"
       }
     ],
-    "dos": [
-      "Pair player color with a number",
-      "Preserve focus on selection"
-    ],
-    "donts": [
-      "Do not add external font dependencies"
-    ]
+    "dos": ["Pair player color with a number", "Preserve focus on selection"],
+    "donts": ["Do not add external font dependencies"]
   }
 }

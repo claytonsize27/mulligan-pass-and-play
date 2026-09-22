@@ -1,5 +1,7 @@
 # Mulligan · Pass & play
 
+[Play the live game](https://claytonsize27.github.io/mulligan-pass-and-play/)
+
 A mobile-first, offline-capable golf card game for **2–4 people sharing one phone**. Static files, zero runtime dependencies, no server, no accounts, no paid integrations. Independent **house edition** based on the official game's public tutorial and card examples.
 
 ## Run and verify
@@ -39,3 +41,4 @@ The game autosaves locally. Clearing browser storage removes the save. No cloud 
 Designed for a **public GitHub repository on GitHub Free** and the default `github.io` address. No purchased domain or paid service is necessary. GitHub's published usage limits still apply. No ongoing compute, scheduled jobs, polling, analytics SDKs, or API calls occur during play. The app requires network only for initial installation, updates, and explicitly opened source links.
 
 Deployment status is recorded in `docs/DEPLOYMENT.md`; this README does not imply that publishing has already happened.
+

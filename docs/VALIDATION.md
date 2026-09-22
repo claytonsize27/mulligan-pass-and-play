@@ -14,9 +14,12 @@ Inspected setup on desktop and a 390×844 mobile viewport. Exercised named setup
 
 ## Limits
 
-Not yet verified on physical iPhone/Android hardware or a public GitHub Pages URL. The actual intro audio could not be reliably transcribed; the complete tutorial transcript and card photographs are the rules evidence. A full official card distribution was unavailable. The rule ledger explicitly discloses inferred mechanics.
+Not yet verified on physical iPhone/Android hardware. The public GitHub Pages URL was verified in the browser. The actual intro audio could not be reliably transcribed; the complete tutorial transcript and card photographs are the rules evidence. A full official card distribution was unavailable. The rule ledger explicitly discloses inferred mechanics.
 
 Desktop responsive testing is not a substitute for physical-device PWA installation, offline eviction policies, or screen-reader testing. Core game behavior is tested independently of the DOM.
 
 
 The browser completed a two-player one-hole game through two 1-Putts, the scorecard and shared-tie final results. The first automated scorecard click needed a retry; subsequent transition and final results succeeded without a console error.
+
+Hosted smoke test: four players, mobile 390x844, long names, private planning and simultaneous reveal; no horizontal overflow. Club selection retained keyboard focus. Initial GitHub Actions test/build/deploy completed successfully. Offline service-worker implementation is present; a disconnected physical-device test remains unperformed.
+

@@ -1,26 +1,316 @@
-import test from 'node:test';import assert from 'node:assert/strict';
-import {createGame,transition as move,assertGame,activePlayer,legalClub,remaining,liveEffects} from '../src/engine.js';
-import {CARDS,CARD_BY_ID,ACTIONS} from '../src/cards.js';
-import {loadGame,saveGame,SAVE_KEY} from '../src/storage.js';
-const newGame=(n=2)=>createGame(Array.from({length:n},(_,i)=>`Player ${i+1}`),[{name:'Test',yards:280,par:4}],12345);
+import test from "node:test";
+import assert from "node:assert/strict";
+import {
+  createGame,
+  transition as move,
+  assertGame,
+  activePlayer,
+  legalClub,
+  remaining,
+  liveEffects,
+} from "../src/engine.js";
+import { CARDS, CARD_BY_ID, ACTIONS } from "../src/cards.js";
+import { loadGame, saveGame, SAVE_KEY } from "../src/storage.js";
+const newGame = (n = 2) =>
+  createGame(
+    Array.from({ length: n }, (_, i) => `Player ${i + 1}`),
+    [{ name: "Test", yards: 280, par: 4 }],
+    12345,
+  );
 // Move actual cards between zones; never conjure test cards.
-function give(s,player,predicate){const id=s.deck.find(id=>predicate(CARD_BY_ID[id]));assert.ok(id);const p=s.players[player];s.deck.splice(s.deck.indexOf(id),1);p.hand.push(id);return id;}
-function emptyHands(s){for(const p of s.players){s.deck.push(...p.hand);p.hand=[];}}
-function setupShot(clubs,actions,targets,positions=[0,0]){let s=newGame(clubs.length);emptyHands(s);for(let i=0;i<clubs.length;i++){s.players[i].position=positions[i];give(s,i,c=>c.club===clubs[i]);give(s,i,c=>c.action===actions[i]&&!s.players[i].hand.includes(c.id));}for(let i=0;i<clubs.length;i++){s=move(s,{type:'OPEN'});const p=activePlayer(s);s=move(s,{type:'COMMIT',club:p.hand[0],action:p.hand[1],target:targets[i]});}return s;}
-function resolve(s){s=move(s,{type:'REACTIONS'});while(s.phase!=='results'){s=move(s,{type:'OPEN'});s=move(s,{type:'PASS'});}return s;}
-test('104 unique dual cards, reproducible shuffle and correct dealing for 2–4 players',()=>{assert.equal(CARDS.length,104);assert.equal(new Set(CARDS.map(c=>c.id)).size,104);for(let n=2;n<=4;n++){const s=newGame(n);assertGame(s);assert.equal(s.deck.length,104-8*n);assert.deepEqual(s,newGame(n));}});
-test('validates names, course and player count',()=>{assert.throws(()=>createGame(['A']));assert.throws(()=>createGame(['A',' a ']));assert.throws(()=>createGame(['A','B'],[{yards:NaN,par:4}]));assert.throws(()=>createGame(['A','B'],[{yards:700,par:4}]));});
-test('card cannot be committed as both faces; anytime cannot be a planned action',()=>{let s=move(newGame(),{type:'OPEN'});const p=activePlayer(s),club=p.hand.find(id=>legalClub(s,p,id));assert.throws(()=>move(s,{type:'COMMIT',club,action:club,target:0}));const special=give(s,p.id,c=>ACTIONS[c.action].anytime);assert.throws(()=>move(s,{type:'COMMIT',club,action:special,target:0}));});
-test('secret commits remove cards; final player causes shared reveal without movement',()=>{let s=setupShot(['driver','hybrid'],['rough','sand'],[1,0]);assert.equal(s.phase,'reveal');assert.equal(s.players[0].position,0);assert.equal(Object.keys(s.plans).length,2);assertGame(s);s=resolve(s);assert.equal(s.players[0].position,150);assert.equal(s.players[1].position,150);assert.equal(s.players[0].hand.length,8);});
-test('modifiers add first then sand halves, independent of seat order',()=>{const s=resolve(setupShot(['hybrid','hybrid','hybrid'],['rough','hook','sand'],[0,0,0],[0,0,0]));assert.equal(s.results[0].distance,87.5);});
-test('putt finishes within 25 yards and ignores distance and penalty actions',()=>{const s=resolve(setupShot(['putt','hybrid'],['sand','bounds'],[0,0],[260,0]));assert.equal(s.players[0].position,280);assert.equal(s.players[0].done,true);assert.equal(s.players[0].strokes,1);});
-test('exact landing finishes; overshoot plays back toward hole',()=>{let s=setupShot(['lob','driver'],['fairway','fairway'],[0,1],[230,0]);s=resolve(s);assert.equal(s.players[0].done,true);assert.equal(remaining(s,s.players[1]),20);assert.equal(s.players[1].done,false);assert.equal(legalClub(s,s.players[1],CARDS.find(c=>c.club==='driver').id),false);});
-test('out of bounds adds two strokes without erasing shot distance',()=>{let s=resolve(setupShot(['hybrid','hybrid'],['bounds','fairway'],[1,1]));assert.equal(s.players[1].strokes,3);assert.equal(s.players[1].position,200);});
-test('cancellation chains restore original effect and conserve cards',()=>{let s=setupShot(['hybrid','hybrid'],['rough','fairway'],[0,1]);const m0=give(s,0,c=>c.action==='mulligan'),m1=give(s,1,c=>c.action==='mulligan');s=move(s,{type:'REACTIONS'});s=move(s,{type:'OPEN'});s=move(s,{type:'CANCEL',card:m0,target:'a0'});assert.ok(liveEffects(s).has('a0'));s=move(s,{type:'PASS'});s=move(s,{type:'OPEN'});s=move(s,{type:'CANCEL',card:m1,target:'x0'});assert.ok(!liveEffects(s).has('a0'));s=move(s,{type:'PASS'});assert.equal(s.players[0].position,150);assertGame(s);});
-test('borrowing spends before revealing and preserves finite inventory',()=>{let s=move(newGame(),{type:'OPEN'});const id=give(s,0,c=>c.action==='borrow');s=move(s,{type:'BORROW',card:id,target:1});assert.equal(s.phase,'borrow');assert.ok(s.discard.includes(id));const take=s.players[1].hand[0];s=move(s,{type:'TAKE',card:take});assert.ok(s.players[0].hand.includes(take));assert.ok(!s.players[1].hand.includes(take));assertGame(s);});
-test('dig recycles actual discard when deck is empty',()=>{let s=move(newGame(),{type:'OPEN'});const id=give(s,0,c=>c.action==='dig');s.discard.push(...s.deck);s.deck=[];s=move(s,{type:'ANYTIME',card:id,cards:[s.players[0].hand[0]]});assert.equal(s.reshuffles,1);assertGame(s);});
-test('save restore covers private hands; corrupt save and quota failures are handled',()=>{let raw;const store={getItem:()=>raw,setItem:(k,v)=>{assert.equal(k,SAVE_KEY);raw=v;}};let s=move(newGame(),{type:'OPEN'});assert.equal(saveGame(s,store),true);assert.equal(loadGame(store).state.phase,'handoff');raw='bad';assert.ok(loadGame(store).error);assert.equal(saveGame(s,{setItem(){throw new Error('Quota');}}),false);});
-test('damaged inventory rejected',()=>{const s=newGame();s.deck[0]=s.deck[1];assert.throws(()=>assertGame(s));});
-test('12-shot cap records pickup separately from a holed ball',()=>{let s=setupShot(['lob','lob'],['fairway','fairway'],[0,1]);s.round=12;s=resolve(s);assert.equal(s.players[0].pickedUp,true);assert.equal(s.players[0].strokes,12);assert.equal(s.players[0].done,true);});
-test('denied localStorage getter does not crash startup',()=>{const original=Object.getOwnPropertyDescriptor(globalThis,'localStorage');Object.defineProperty(globalThis,'localStorage',{configurable:true,get(){throw new Error('Access denied');}});try{assert.equal(saveGame(newGame()),false);assert.ok(loadGame().error);}finally{if(original)Object.defineProperty(globalThis,'localStorage',original);else delete globalThis.localStorage;}});
-test('simulation: complete 2–4 player, 18-hole games without deadlock or card loss',()=>{for(let n=2;n<=4;n++)for(let seed=1;seed<=8;seed++){let s=createGame(Array.from({length:n},(_,i)=>`P${i}`),Array.from({length:18},(_,i)=>({yards:100+i*25,par:4})),seed);let steps=0;while(s.phase!=='finished'&&steps++<5000){switch(s.phase){case 'handoff':s=move(s,{type:'OPEN'});break;case 'plan':{const p=activePlayer(s);const options=p.hand.filter(id=>legalClub(s,p,id)).sort((a,b)=>Math.abs(remaining(s,p)-(CARD_BY_ID[a].club==='putt'?remaining(s,p):({driver:300,wood:250,hybrid:200,iron:150,wedge:100,lob:50}[CARD_BY_ID[a].club])))-Math.abs(remaining(s,p)-(CARD_BY_ID[b].club==='putt'?remaining(s,p):({driver:300,wood:250,hybrid:200,iron:150,wedge:100,lob:50}[CARD_BY_ID[b].club]))));const club=options.find(id=>p.hand.some(a=>a!==id&&!ACTIONS[CARD_BY_ID[a].action].anytime));const action=p.hand.find(id=>id!==club&&!ACTIONS[CARD_BY_ID[id].action].anytime);s=club&&action?move(s,{type:'COMMIT',club,action,target:p.id}):move(s,{type:'REST'});break;}case 'reveal':s=move(s,{type:'REACTIONS'});break;case 'reaction':s=move(s,{type:'PASS'});break;case 'results':s=move(s,{type:'CONTINUE'});break;case 'score':s=move(s,{type:'NEXT_HOLE'});break;}assertGame(s);}assert.equal(s.phase,'finished');for(const p of s.players)assert.equal(p.scores.length,18);}});
+function give(s, player, predicate) {
+  const id = s.deck.find((id) => predicate(CARD_BY_ID[id]));
+  assert.ok(id);
+  const p = s.players[player];
+  s.deck.splice(s.deck.indexOf(id), 1);
+  p.hand.push(id);
+  return id;
+}
+function emptyHands(s) {
+  for (const p of s.players) {
+    s.deck.push(...p.hand);
+    p.hand = [];
+  }
+}
+function setupShot(clubs, actions, targets, positions = [0, 0]) {
+  let s = newGame(clubs.length);
+  emptyHands(s);
+  for (let i = 0; i < clubs.length; i++) {
+    s.players[i].position = positions[i];
+    give(s, i, (c) => c.club === clubs[i]);
+    give(
+      s,
+      i,
+      (c) => c.action === actions[i] && !s.players[i].hand.includes(c.id),
+    );
+  }
+  for (let i = 0; i < clubs.length; i++) {
+    s = move(s, { type: "OPEN" });
+    const p = activePlayer(s);
+    s = move(s, {
+      type: "COMMIT",
+      club: p.hand[0],
+      action: p.hand[1],
+      target: targets[i],
+    });
+  }
+  return s;
+}
+function resolve(s) {
+  s = move(s, { type: "REACTIONS" });
+  while (s.phase !== "results") {
+    s = move(s, { type: "OPEN" });
+    s = move(s, { type: "PASS" });
+  }
+  return s;
+}
+test("104 unique dual cards, reproducible shuffle and correct dealing for 2–4 players", () => {
+  assert.equal(CARDS.length, 104);
+  assert.equal(new Set(CARDS.map((c) => c.id)).size, 104);
+  for (let n = 2; n <= 4; n++) {
+    const s = newGame(n);
+    assertGame(s);
+    assert.equal(s.deck.length, 104 - 8 * n);
+    assert.deepEqual(s, newGame(n));
+  }
+});
+test("validates names, course and player count", () => {
+  assert.throws(() => createGame(["A"]));
+  assert.throws(() => createGame(["A", " a "]));
+  assert.throws(() => createGame(["A", "B"], [{ yards: NaN, par: 4 }]));
+  assert.throws(() => createGame(["A", "B"], [{ yards: 700, par: 4 }]));
+});
+test("card cannot be committed as both faces; anytime cannot be a planned action", () => {
+  let s = move(newGame(), { type: "OPEN" });
+  const p = activePlayer(s),
+    club = p.hand.find((id) => legalClub(s, p, id));
+  assert.throws(() =>
+    move(s, { type: "COMMIT", club, action: club, target: 0 }),
+  );
+  const special = give(s, p.id, (c) => ACTIONS[c.action].anytime);
+  assert.throws(() =>
+    move(s, { type: "COMMIT", club, action: special, target: 0 }),
+  );
+});
+test("secret commits remove cards; final player causes shared reveal without movement", () => {
+  let s = setupShot(["driver", "hybrid"], ["rough", "sand"], [1, 0]);
+  assert.equal(s.phase, "reveal");
+  assert.equal(s.players[0].position, 0);
+  assert.equal(Object.keys(s.plans).length, 2);
+  assertGame(s);
+  s = resolve(s);
+  assert.equal(s.players[0].position, 150);
+  assert.equal(s.players[1].position, 150);
+  assert.equal(s.players[0].hand.length, 8);
+});
+test("modifiers add first then sand halves, independent of seat order", () => {
+  const s = resolve(
+    setupShot(
+      ["hybrid", "hybrid", "hybrid"],
+      ["rough", "hook", "sand"],
+      [0, 0, 0],
+      [0, 0, 0],
+    ),
+  );
+  assert.equal(s.results[0].distance, 87.5);
+});
+test("putt finishes within 25 yards and ignores distance and penalty actions", () => {
+  const s = resolve(
+    setupShot(["putt", "hybrid"], ["sand", "bounds"], [0, 0], [260, 0]),
+  );
+  assert.equal(s.players[0].position, 280);
+  assert.equal(s.players[0].done, true);
+  assert.equal(s.players[0].strokes, 1);
+});
+test("exact landing finishes; overshoot plays back toward hole", () => {
+  let s = setupShot(
+    ["lob", "driver"],
+    ["fairway", "fairway"],
+    [0, 1],
+    [230, 0],
+  );
+  s = resolve(s);
+  assert.equal(s.players[0].done, true);
+  assert.equal(remaining(s, s.players[1]), 20);
+  assert.equal(s.players[1].done, false);
+  assert.equal(
+    legalClub(s, s.players[1], CARDS.find((c) => c.club === "driver").id),
+    false,
+  );
+});
+test("out of bounds adds two strokes without erasing shot distance", () => {
+  let s = resolve(
+    setupShot(["hybrid", "hybrid"], ["bounds", "fairway"], [1, 1]),
+  );
+  assert.equal(s.players[1].strokes, 3);
+  assert.equal(s.players[1].position, 200);
+});
+test("cancellation chains restore original effect and conserve cards", () => {
+  let s = setupShot(["hybrid", "hybrid"], ["rough", "fairway"], [0, 1]);
+  const m0 = give(s, 0, (c) => c.action === "mulligan"),
+    m1 = give(s, 1, (c) => c.action === "mulligan");
+  s = move(s, { type: "REACTIONS" });
+  s = move(s, { type: "OPEN" });
+  s = move(s, { type: "CANCEL", card: m0, target: "a0" });
+  assert.ok(liveEffects(s).has("a0"));
+  s = move(s, { type: "PASS" });
+  s = move(s, { type: "OPEN" });
+  s = move(s, { type: "CANCEL", card: m1, target: "x0" });
+  assert.ok(!liveEffects(s).has("a0"));
+  s = move(s, { type: "PASS" });
+  assert.equal(s.players[0].position, 150);
+  assertGame(s);
+});
+test("borrowing spends before revealing and preserves finite inventory", () => {
+  let s = move(newGame(), { type: "OPEN" });
+  const id = give(s, 0, (c) => c.action === "borrow");
+  s = move(s, { type: "BORROW", card: id, target: 1 });
+  assert.equal(s.phase, "borrow");
+  assert.ok(s.discard.includes(id));
+  const take = s.players[1].hand[0];
+  s = move(s, { type: "TAKE", card: take });
+  assert.ok(s.players[0].hand.includes(take));
+  assert.ok(!s.players[1].hand.includes(take));
+  assertGame(s);
+});
+test("dig recycles actual discard when deck is empty", () => {
+  let s = move(newGame(), { type: "OPEN" });
+  const id = give(s, 0, (c) => c.action === "dig");
+  s.discard.push(...s.deck);
+  s.deck = [];
+  s = move(s, { type: "ANYTIME", card: id, cards: [s.players[0].hand[0]] });
+  assert.equal(s.reshuffles, 1);
+  assertGame(s);
+});
+test("save restore covers private hands; corrupt save and quota failures are handled", () => {
+  let raw;
+  const store = {
+    getItem: () => raw,
+    setItem: (k, v) => {
+      assert.equal(k, SAVE_KEY);
+      raw = v;
+    },
+  };
+  let s = move(newGame(), { type: "OPEN" });
+  assert.equal(saveGame(s, store), true);
+  assert.equal(loadGame(store).state.phase, "handoff");
+  raw = "bad";
+  assert.ok(loadGame(store).error);
+  assert.equal(
+    saveGame(s, {
+      setItem() {
+        throw new Error("Quota");
+      },
+    }),
+    false,
+  );
+});
+test("damaged inventory rejected", () => {
+  const s = newGame();
+  s.deck[0] = s.deck[1];
+  assert.throws(() => assertGame(s));
+});
+test("12-shot cap records pickup separately from a holed ball", () => {
+  let s = setupShot(["lob", "lob"], ["fairway", "fairway"], [0, 1]);
+  s.round = 12;
+  s = resolve(s);
+  assert.equal(s.players[0].pickedUp, true);
+  assert.equal(s.players[0].strokes, 12);
+  assert.equal(s.players[0].done, true);
+});
+test("denied localStorage getter does not crash startup", () => {
+  const original = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+  Object.defineProperty(globalThis, "localStorage", {
+    configurable: true,
+    get() {
+      throw new Error("Access denied");
+    },
+  });
+  try {
+    assert.equal(saveGame(newGame()), false);
+    assert.ok(loadGame().error);
+  } finally {
+    if (original) Object.defineProperty(globalThis, "localStorage", original);
+    else delete globalThis.localStorage;
+  }
+});
+test("simulation: complete 2–4 player, 18-hole games without deadlock or card loss", () => {
+  for (let n = 2; n <= 4; n++)
+    for (let seed = 1; seed <= 8; seed++) {
+      let s = createGame(
+        Array.from({ length: n }, (_, i) => `P${i}`),
+        Array.from({ length: 18 }, (_, i) => ({ yards: 100 + i * 25, par: 4 })),
+        seed,
+      );
+      let steps = 0;
+      while (s.phase !== "finished" && steps++ < 5000) {
+        switch (s.phase) {
+          case "handoff":
+            s = move(s, { type: "OPEN" });
+            break;
+          case "plan": {
+            const p = activePlayer(s);
+            const options = p.hand
+              .filter((id) => legalClub(s, p, id))
+              .sort(
+                (a, b) =>
+                  Math.abs(
+                    remaining(s, p) -
+                      (CARD_BY_ID[a].club === "putt"
+                        ? remaining(s, p)
+                        : {
+                            driver: 300,
+                            wood: 250,
+                            hybrid: 200,
+                            iron: 150,
+                            wedge: 100,
+                            lob: 50,
+                          }[CARD_BY_ID[a].club]),
+                  ) -
+                  Math.abs(
+                    remaining(s, p) -
+                      (CARD_BY_ID[b].club === "putt"
+                        ? remaining(s, p)
+                        : {
+                            driver: 300,
+                            wood: 250,
+                            hybrid: 200,
+                            iron: 150,
+                            wedge: 100,
+                            lob: 50,
+                          }[CARD_BY_ID[b].club]),
+                  ),
+              );
+            const club = options.find((id) =>
+              p.hand.some(
+                (a) => a !== id && !ACTIONS[CARD_BY_ID[a].action].anytime,
+              ),
+            );
+            const action = p.hand.find(
+              (id) => id !== club && !ACTIONS[CARD_BY_ID[id].action].anytime,
+            );
+            s =
+              club && action
+                ? move(s, { type: "COMMIT", club, action, target: p.id })
+                : move(s, { type: "REST" });
+            break;
+          }
+          case "reveal":
+            s = move(s, { type: "REACTIONS" });
+            break;
+          case "reaction":
+            s = move(s, { type: "PASS" });
+            break;
+          case "results":
+            s = move(s, { type: "CONTINUE" });
+            break;
+          case "score":
+            s = move(s, { type: "NEXT_HOLE" });
+            break;
+        }
+        assertGame(s);
+      }
+      assert.equal(s.phase, "finished");
+      for (const p of s.players) assert.equal(p.scores.length, 18);
+    }
+});
