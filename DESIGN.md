@@ -70,3 +70,6 @@ Documentation was reconciled with source inline after the documenter agent hit i
 
 ### CPU and course refinements
 Each player seat groups a name input with a Human/CPU difficulty selector and a brief strategy description. Human inputs start empty; CPU names are automatic and read-only, with numbered suffixes for duplicate difficulties. CPU hands never render; a covered status replaces human handoff controls while the CPU acts. Course lanes share an expanded proportional scale when any ball overshoots. Shared actions include effect text, and discard identities are never rendered.
+
+### Native selector and reaction confirmation
+Seat type changes preserve the native select element and focus; only dependent fields update. A visible Undo last Mulligan button and pending-choice explanation appear while the current reaction has reversible choices. Result annotations sit with their original actions.

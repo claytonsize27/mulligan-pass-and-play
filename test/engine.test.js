@@ -159,7 +159,57 @@ test("cancellation chains restore original effect and conserve cards", () => {
   assert.ok(!liveEffects(s).has("a0"));
   s = move(s, { type: "PASS" });
   assert.equal(s.players[0].position, 150);
+  assert.ok(s.results[0].effects.some(e => e.includes("Rough (restored:")));
   assertGame(s);
+});
+
+test("reaction Mulligans undo in reverse order, restore exact cards, and lock on pass", () => {
+  let s = setupShot(["hybrid", "hybrid"], ["rough", "fairway"], [0, 1]);
+  const first = give(s, 0, c => c.action === "mulligan");
+  const second = give(s, 0, c => c.action === "mulligan");
+  const other = give(s, 1, c => c.action === "mulligan");
+  s = move(move(s, {type:"REACTIONS"}), {type:"OPEN"});
+  const original = structuredClone(s);
+  s = move(s, {type:"CANCEL", card:first, target:"a0"});
+  s = move(s, {type:"CANCEL", card:second, target:"x0"});
+  assert.equal(liveEffects(s).has("a0"), false);
+  // Cover and reload retain pending choices without prematurely confirming them.
+  s = move(s, {type:"COVER"});
+  s = loadGame({getItem: () => JSON.stringify(s)}).state;
+  assert.throws(() => move(s, {type:"UNDO_CANCEL"}));
+  s = move(s, {type:"OPEN"});
+  s = move(s, {type:"UNDO_CANCEL"});
+  assert.ok(liveEffects(s).has("a0"));
+  assert.ok(s.players[0].hand.includes(second));
+  s = move(s, {type:"UNDO_CANCEL"});
+  assert.deepEqual(s.players[0].hand, original.players[0].hand);
+  assert.deepEqual(s.discard, original.discard);
+  assert.deepEqual(s.deck, original.deck);
+  assert.equal(s.seed, original.seed);
+  assert.throws(() => move(s, {type:"UNDO_CANCEL"}));
+  s = move(s, {type:"CANCEL", card:first, target:"a0"});
+  s = move(move(s, {type:"PASS"}), {type:"OPEN"});
+  assert.throws(() => move(s, {type:"UNDO_CANCEL"}));
+  s = move(s, {type:"CANCEL", card:other, target:"x0"});
+  s = move(s, {type:"UNDO_CANCEL"});
+  assert.ok(liveEffects(s).has("a0"));
+  s = move(s, {type:"PASS"});
+  assert.throws(() => move(s, {type:"UNDO_CANCEL"}));
+  assert.equal(s.players[0].position, 200);
+  assert.ok(s.results[0].effects.some(e => e.includes("Rough (cancelled by Mulligan)")));
+  assert.ok(!s.results[0].effects.some(e => e.includes("restored:")));
+  assertGame(s);
+});
+
+test("three-deep Mulligan chain reports cancelled, not restored", () => {
+  let s = setupShot(["hybrid", "hybrid"], ["rough", "fairway"], [0, 1]);
+  const cards = Array.from({length:3}, () => give(s, 0, c => c.action === "mulligan"));
+  s = move(move(s, {type:"REACTIONS"}), {type:"OPEN"});
+  for (let i = 0; i < 3; i++) s = move(s, {type:"CANCEL", card:cards[i], target:i ? `x${i-1}` : "a0"});
+  s = move(s, {type:"PASS"});
+  s = move(move(s, {type:"OPEN"}), {type:"PASS"});
+  assert.equal(s.players[0].position, 200);
+  assert.ok(!s.results[0].effects.some(e => e.includes("restored:")));
 });
 test("borrowing spends before revealing and preserves finite inventory", () => {
   let s = move(newGame(), { type: "OPEN" });

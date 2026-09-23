@@ -37,3 +37,9 @@ Build remains dependency-free, approximately 105 KB uncompressed including docum
 Supersedes the public-discard behavior described in the prior update. All 24 tests pass. New coverage checks 800 generated courses across all fixed lengths: correct per-nine par counts, distance bounds, yardage increments and varied layouts. Tests confirm automatic CPU names avoid collisions, discards cannot change any CPU observation or decision, custom scorecards are untouched, and generated courses survive save/restore without rerolling. The existing complete-game CPU simulations still pass.
 
 Browser verification: a 390px setup assigned CPU - Normal and CPU - Normal 2, made their name fields read-only, and restored the previous human name when switching back. Starting a three-hole game produced a randomized 210-yard par 3 first hole with the assigned CPU names and no discard viewer. DOM width checks showed no horizontal overflow.
+
+## Reaction undo and selector fix (23 September 2026)
+
+All 26 tests pass, including cancellation-of-cancellation restoration labels, three-deep chains, repeated reverse-order undo, exact hand/discard/deck conservation, covered/reloaded pending reactions, and rejection of undo after passing or finishing. Existing complete-round simulations pass. The supplied MOV could not be decoded reliably by the local OpenCV reader (invalid H.264 NAL units); no claim of successful video inspection is made. The iOS picker issue is addressed by retaining the native select instead of replacing and refocusing it. Native iOS verification is not available in this environment.
+
+Browser check: changed CPU/Human selectors, started a two-human game, cancelled Rough with the only Mulligan, undid it (one available card and live Rough restored), replayed it, passed and finished reactions. Results showed Rough (cancelled by Mulligan). No console errors or horizontal overflow at a 390px viewport.

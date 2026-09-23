@@ -194,7 +194,7 @@ function reaction() {
             "",
           )}${game.cancels.map((x, i) => (cancelled.has("x" + i) ? "" : button(`Cancel ${esc(game.players[x.player].name)}’s Mulligan`, "cancel-effect", "secondary", `data-effect="x${i}" data-id="${cards[0]}"`))).join("")}</div>`
       : ""
-  }${button(game.cursor === game.order.length - 1 ? "Finish reactions & swing" : "Pass to next player", "pass")}</section>`;
+  }${game.cancels.at(-1)?.player === p.id && game.cancels.at(-1)?.card && !game.cancels.at(-1)?.locked ? `<div class="reaction-draft"><p>Your Mulligan choices are not locked yet. Undo them one at a time, or finish your reaction to confirm.</p>${button("Undo last Mulligan", "undo-mulligan", "secondary")}</div>` : ""}${button(game.cursor === game.order.length - 1 ? "Finish reactions & swing" : "Pass to next player", "pass")}</section>`;
 }
 function results() {
   return `${top()}<section class="shared results"><h2>Swing, together.</h2><div class="result-list">${game.results
@@ -289,7 +289,21 @@ function rememberForm() {
   if (form.elements.custom) custom = form.elements.custom.value;
 }
 app.addEventListener("change", (e) => {
-  if (e.target.name === "round" || e.target.name?.startsWith("controller")) {
+  if (e.target.name?.startsWith("controller")) {
+    rememberForm();
+    // Keep the native select mounted and focused: replacing/refocusing it can
+    // reopen the iOS picker immediately after the user chooses an option.
+    const assigned = playerNames(names.slice(0, count), controllers.slice(0, count));
+    const form = e.target.form;
+    for (let i = 0; i < count; i++) {
+      const input = form.elements[`name${i}`];
+      const cpu = controllers[i] !== "human";
+      input.value = cpu ? assigned[i] : names[i];
+      input.readOnly = cpu;
+      input.setAttribute("aria-readonly", String(cpu));
+      document.querySelector(`#seat-help${i}`).textContent = LEVEL_HELP[controllers[i]] || "You choose the cards.";
+    }
+  } else if (e.target.name === "round") {
     rememberForm();
     render();
   }
@@ -430,6 +444,9 @@ app.addEventListener("click", (e) => {
       break;
     case "cancel-effect":
       act({ type: "CANCEL", card: id, target: b.dataset.effect });
+      break;
+    case "undo-mulligan":
+      act({ type: "UNDO_CANCEL" });
       break;
     case "pass":
       act({ type: "PASS" });

@@ -58,7 +58,7 @@ Every physical card belongs to exactly one zone: draw pile, player hand, locked 
 - Preparation specials must be used before locking. Gold special faces cannot fill the action slot.
 - Borrow is spent before a target hand is shown. The choice must finish before planning resumes.
 - Read the lie spends a real card before displaying a locked plan.
-- Mulligan cancels one action or a prior Mulligan. Resolve the cancellation chain in reverse order, then apply active actions.
+- Mulligan cancels one action or a prior Mulligan. Before passing or finishing reactions, undo your latest Mulligan to return its exact card to your hand; repeat to undo earlier choices in your turn. Passing locks the choices. Resolve the cancellation chain in reverse order, then apply active actions. Results identify restored or cancelled actions.
 - A practice swing exchanges the entire hand for one stroke and uses the player's shot opportunity. It solves otherwise unplayable hands without an endless free refresh.
 - Finished players sit out the remaining shots. Actions may target only active players. Borrow may take an unplayed card from any other player's retained hand.
 - Fixed-length rounds generate randomized fictional courses as described below. Enter real scorecard yardages and pars manually for any 1–18-hole course within the supported 50–650 yd range.

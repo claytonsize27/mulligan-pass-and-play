@@ -195,7 +195,6 @@ function resolve(s) {
           const a = ACTIONS[CARD_BY_ID[s.plans[i].action].action];
           distance += a.delta || 0;
           penalty += a.penalty || 0;
-          effects.push(`${s.players[i].name}: ${a.name}`);
         }
         distance = Math.max(0, distance);
         for (const i of incoming)
@@ -205,6 +204,18 @@ function resolve(s) {
         Math.sign(s.course[s.hole].yards - p.position || 1) * distance;
       p.strokes += penalty;
       if (putt || remaining(s, p) < 0.001) p.done = true;
+    }
+    // Preserve the final cancellation outcome beside the original action,
+    // even when a putt or practice swing makes the action irrelevant.
+    for (const i of s.order.filter(i => s.plans[i].action && s.plans[i].target === id)) {
+      const action = ACTIONS[CARD_BY_ID[s.plans[i].action].action];
+      const off = cancelled.has(`a${i}`);
+      const restored = !off && s.cancels.some((x, index) =>
+        x.target === `a${i}` && cancelled.has(`x${index}`));
+      const status = off ? " (cancelled by Mulligan)" : restored ?
+        " (restored: the Mulligan cancelling this action was cancelled)" : "";
+      const ignored = !off && (putt || plan.rest) ? " - no effect on this " + (putt ? "putt" : "practice swing") : "";
+      effects.push(`${s.players[i].name}: ${action.name}${status}${ignored}`);
     }
     if (s.round >= 12 && !p.done) {
       p.strokes = Math.max(p.strokes, s.course[s.hole].par + 8);
@@ -371,12 +382,26 @@ export function transition(state, event) {
         !liveEffects(s).has(event.target),
         "That effect is already cancelled.",
       );
+      const handIndex = p.hand.indexOf(event.card);
       discard(s, p, event.card);
-      s.cancels.push({ player: p.id, target: event.target });
+      s.cancels.push({ player: p.id, target: event.target, card: event.card, handIndex, locked: false });
+      break;
+    }
+    case "UNDO_CANCEL": {
+      insist(s.phase === "reaction", "You can only undo during your reaction turn.");
+      const last = s.cancels.at(-1);
+      insist(last && last.player === p.id && !last.locked && last.card,
+        "There is no unconfirmed Mulligan to undo.");
+      const index = s.discard.indexOf(last.card);
+      insist(index >= 0, "The Mulligan card cannot be restored.");
+      s.discard.splice(index, 1);
+      p.hand.splice(last.handIndex, 0, last.card);
+      s.cancels.pop();
       break;
     }
     case "PASS":
       insist(s.phase === "reaction", "Not a reaction turn.");
+      for (const x of s.cancels) if (x.player === p.id) x.locked = true;
       advanceReaction(s);
       break;
     case "CONTINUE":
@@ -511,6 +536,9 @@ export function assertGame(s) {
       s.cancels.every(
         (x, i) =>
           s.order.includes(x.player) &&
+          (x.card === undefined || (CARD_BY_ID[x.card]?.action === "mulligan" &&
+            Number.isInteger(x.handIndex) && x.handIndex >= 0 &&
+            typeof x.locked === "boolean")) &&
           (/^a[0-3]$/.test(x.target) ||
             (/^x\d+$/.test(x.target) && Number(x.target.slice(1)) < i)),
       ),

@@ -22,7 +22,7 @@ export function cpuObservation(s) {
     players: s.players.map(p => ({ id: p.id, position: p.position,
       shots: p.shots, strokes: p.strokes, scores: p.scores, done: p.done })),
     plans: publicPlans ? s.plans : {},
-    cancels: publicPlans ? s.cancels : [],
+    cancels: publicPlans ? s.cancels.map(({player, target}) => ({player, target})) : [],
   });
 }
 const gap = (o, p) => Math.abs(o.yards - p.position);

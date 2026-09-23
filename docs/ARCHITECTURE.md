@@ -101,3 +101,21 @@ A new 1-hole round chooses par 3, 4 or 5. Three holes have one of each, shuffled
 Each hole gets a random distance in five-yard steps: par 3 uses 125–225 yards, par 4 uses 275–450, and par 5 uses 475–600. These house ranges are within the [USGA par guidelines](https://www.usga.org/content/usga/home-page/handicapping/roh/Content/rules/Appendix%20F%20Establishing%20Par.htm); they are not an official course rating. Custom scorecards retain the existing 1–18 holes, 50–650 yard and par 3–6 validation.
 
 Generation runs once when a new game is submitted. The resulting scorecard is saved with the game, so resume and reload never reroll holes. Existing saved rounds keep their course. `src/setup.js` owns generation and collision-safe CPU naming; its injectable random function supports repeatable tests without exposing the deck seed.
+
+## Reversible reaction choices
+
+CANCEL records the card ID, original hand index and `locked: false` on its cancellation entry. The real card stays in discard during the preview; reactions never draw, so it cannot be recycled before confirmation. UNDO_CANCEL pops only the current player's last unconfirmed entry and returns that exact card to its original hand position. Reverse-order undo keeps cancellation references valid. PASS locks the current player's entries before advancing or resolving. COVER and reload preserve the pending choices. Legacy saves without this optional metadata still load; pre-update Mulligans cannot be undone because their original card identity was not recorded. New choices in those saves are reversible. CPU observations strip undo metadata, exposing only public player/target cancellation information.
+
+```mermaid
+flowchart LR
+  Reaction -->|CANCEL| Pending[Preview Mulligan]
+  Pending -->|UNDO_CANCEL: return exact card| Reaction
+  Pending -->|another CANCEL| Pending
+  Pending -->|cover or reload| Covered[Covered pending choices]
+  Covered -->|open| Pending
+  Pending -->|PASS: lock choices| Next[Next player or resolve]
+```
+
+Result strings are generated from the final cancellation graph before locked plans clear. A live original action whose cancelling Mulligan was cancelled gets a restored annotation. A cancelled original gets a cancelled annotation, never a misleading restored label. Putt/practice immunity remains explicit.
+
+CPU selector changes patch only dependent name fields and helper text. The native select DOM node remains mounted and receives no programmatic refocus.

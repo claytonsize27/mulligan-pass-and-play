@@ -50,3 +50,5 @@ Human names start empty; leave one blank to use Player N. CPU names are assigned
 Keep your hand between holes. Played cards are replaced up to eight; only an exhausted draw pile triggers a shuffle of currently discarded cards. Overshoots appear beyond the course flag with their distance, and shared reveals include action-effect descriptions.
 
 `src/cpu.js` contains the observation boundary and strategies; `src/course-view.js` provides course scale geometry. `test/cpu.test.js` covers hidden-information independence, legacy saves, all difficulty levels and card continuity across holes.
+
+During reactions, **Undo last Mulligan** returns your latest unconfirmed Mulligan to your hand. Repeat to undo earlier choices in that turn. **Pass to next player** or **Finish reactions & swing** confirms them. Results identify an action restored by cancelling its Mulligan.

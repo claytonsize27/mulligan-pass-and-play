@@ -40,3 +40,7 @@ Full simulated rounds finish for every player count; cards remain conserved acro
 Discard contents are no longer public to any player or CPU. Counts may be shown, but identities are absent from the rendered UI and CPU observation. CPU seats always get automatic difficulty names; duplicate names receive numbered suffixes, avoiding collisions with human names. Human names remain editable and are restored when switching a seat back from CPU.
 
 Fixed round lengths generate fresh yardages and shuffled par order. Par distributions: 1 hole randomly par 3/4/5; 3 holes one each; 9 holes 2/5/2; 18 holes 4/10/4 with each nine independently 2/5/2. Custom scorecards are unchanged. Existing saves retain their original course and names.
+
+## Reaction and mobile-selector refinements (23 September 2026)
+
+Changing a seat type updates its name/read-only state and description without replacing or refocusing the native select. This avoids reopening the mobile picker. During reactions, Undo last Mulligan reverses the current player's unconfirmed choices in reverse order, including a Mulligan aimed at another Mulligan. Passing or finishing reactions locks those choices. Covers, saves and reloads do not confirm them. Shot results label restored actions beside the original action and distinguish actions still cancelled or ignored by a putt/practice swing.
