@@ -51,3 +51,7 @@ A reproducible 48-round benchmark used nine holes, seeds 1 through 48 and rotati
 Reproduce calibration with `node scripts/benchmark-cpus.mjs`. The browser confirmed all four automatic golfer names while retaining difficulty labels, and Pause/Resume autoplay during a four-CPU round. No console errors observed.
 
 The four-CPU browser round reached its final score automatically after resume, without any planning, reveal, reaction, result or scorecard clicks.
+
+Autoplay correction: all 28 tests pass. Flow tests cover multiple humans with only one finished, all humans finished, autoplay disabled, all-CPU play, human private phases, final results and manual Hole Complete. Full-round simulations and the calibration script explicitly acknowledge Hole Complete as a user action.
+
+Browser regression: with autoplay paused, both CPUs completed planning and reached All Cards on the Table. After manually starting reactions, both CPUs completed reactions and reached Swing Together while autoplay remained paused. No console errors were observed.

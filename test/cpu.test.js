@@ -24,15 +24,25 @@ test("Easy takes a guaranteed hole-out and defends against a damaging action", (
   assert.equal(chooseCpuMove(cpuObservation(s), "easy").type, "CANCEL");
 });
 
-test("CPU flow skips shared clicks and stops at human privacy gates and final results", () => {
-  const s = createGame(["A", "B"], undefined, 22, ["human", "expert"]);
-  assert.equal(automaticEvent(s), null);
-  for (const [phase,type] of Object.entries({reveal:"REACTIONS",results:"CONTINUE",score:"NEXT_HOLE"})) {
-    s.phase = phase; assert.deepEqual(automaticEvent(s), {type});
+test("shared screens wait for every unfinished human and all hole scorecards require a click", () => {
+  const s = createGame(["A", "B", "C"], undefined, 22, ["human", "human", "expert"]);
+  for (const phase of ["reveal", "results"]) {
+    s.phase = phase;
+    s.players[0].done = false; s.players[1].done = false;
+    assert.equal(automaticEvent(s), null);
+    s.players[0].done = true;
+    assert.equal(automaticEvent(s), null);
+    s.players[1].done = true;
+    assert.deepEqual(automaticEvent(s), {type:phase === "reveal" ? "REACTIONS" : "CONTINUE"});
+    assert.equal(automaticEvent(s, false), null);
   }
-  s.phase = "finished"; assert.equal(automaticEvent(s), null);
-  s.phase = "plan"; assert.equal(automaticEvent(s), null);
-  s.players[1].controller = "human"; s.phase = "reveal";
+  for (const phase of ["score", "finished", "plan", "reaction", "handoff"]) {
+    s.phase = phase; assert.equal(automaticEvent(s), null);
+  }
+  s.players.forEach(p => p.controller = "expert");
+  s.phase = "score"; assert.equal(automaticEvent(s), null);
+  s.phase = "reveal"; assert.deepEqual(automaticEvent(s), {type:"REACTIONS"});
+  s.players.forEach(p => delete p.controller);
   assert.equal(automaticEvent(s), null);
 });
 
@@ -78,7 +88,7 @@ test("all four CPU levels complete finite 2–4 player 18-hole games; holes reta
       assert.ok(++moves < 8000, `${level}/${n} stuck`);
       const before = structuredClone(s);
       const auto = automaticEvent(s);
-      const event = auto || chooseCpuMove(cpuObservation(s), activePlayer(s).controller, () => .47);
+      const event = auto || (s.phase === "score" ? {type:"NEXT_HOLE"} : null) || chooseCpuMove(cpuObservation(s), activePlayer(s).controller, () => .47);
       s = transition(s, event);
       assertGame(s);
       if (s.hole !== before.hole) {

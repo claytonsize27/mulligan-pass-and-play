@@ -248,11 +248,11 @@ function render() {
                 : game.phase === "results"
                   ? results()
                   : score();
-  const auto = screen === "game" ? automaticEvent(game) : null;
-  if ((isCpuTurn() || auto) && !autoplayPaused && !document.hidden) {
+  const auto = screen === "game" ? automaticEvent(game, !autoplayPaused) : null;
+  if ((isCpuTurn() || auto) && !document.hidden) {
     const revision = game.revision;
     cpuTimer = setTimeout(() => {
-      if (screen === "game" && game.revision === revision && !document.hidden && !autoplayPaused)
+      if (screen === "game" && game.revision === revision && !document.hidden && (isCpuTurn() || !autoplayPaused))
         act(auto || chooseCpuMove(cpuObservation(game), activePlayer(game).controller));
     }, auto ? (game.phase === "results" || game.phase === "score" ? 1800 : 800) : 180);
   }

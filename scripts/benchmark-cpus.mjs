@@ -9,7 +9,7 @@ for (let seed = 1; seed <= 48; seed++) {
   const order = levels.map((_, i) => levels[(i + seed) % 4]);
   let state = createGame(order, COURSE, seed, order);
   while (state.phase !== "finished") {
-    state = transition(state, automaticEvent(state) ||
+    state = transition(state, automaticEvent(state) || (state.phase === "score" ? {type:"NEXT_HOLE"} : null) ||
       chooseCpuMove(cpuObservation(state), activePlayer(state).controller));
   }
   for (const player of state.players)
