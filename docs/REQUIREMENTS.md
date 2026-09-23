@@ -20,7 +20,7 @@ Eight-card hands, three-hole quick round, rotating preparation order, convention
 
 ## Deliberately outside this request
 
-Online multiplayer, paid hosting, accounts, cloud saves, AI players, a native app-store binary, course APIs and official asset duplication. The pass-and-play requirement does not need any of these.
+Online multiplayer, paid hosting, accounts, cloud saves, cloud AI services, a native app-store binary, course APIs and official asset duplication. The pass-and-play requirement does not need any of these.
 
 ## Acceptance checks
 
@@ -33,4 +33,10 @@ Full simulated rounds finish for every player count; cards remain conserved acro
 - Every planned action includes its brief effect description on reveal and reactions; cancelled actions remain labelled cancelled.
 - Hands, deck order and discards persist across holes. Refill to eight after resolution. Recycle only currently discarded cards on draw exhaustion, never held or committed cards.
 - Each of 2–4 seats selects Human, Easy CPU, Normal CPU, Hard CPU or Expert CPU. Any mix, including all CPUs, is supported.
-- CPUs receive no opponent hand, hidden plan, seed or deck order. Expert may reason from the publicly inspectable discard pile and inferred deck catalogue. No paid AI or cloud computation.
+- CPUs receive no opponent hand, hidden plan, seed or deck order. Discard identities are hidden from both humans and CPUs. Expert may reason from its own hand and the inferred deck catalogue. No paid AI or cloud computation.
+
+## Latest refinements
+
+Discard contents are no longer public to any player or CPU. Counts may be shown, but identities are absent from the rendered UI and CPU observation. CPU seats always get automatic difficulty names; duplicate names receive numbered suffixes, avoiding collisions with human names. Human names remain editable and are restored when switching a seat back from CPU.
+
+Fixed round lengths generate fresh yardages and shuffled par order. Par distributions: 1 hole randomly par 3/4/5; 3 holes one each; 9 holes 2/5/2; 18 holes 4/10/4 with each nine independently 2/5/2. Custom scorecards are unchanged. Existing saves retain their original course and names.

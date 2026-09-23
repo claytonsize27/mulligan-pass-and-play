@@ -45,7 +45,7 @@ Deployment status is recorded in `docs/DEPLOYMENT.md`; this README does not impl
 
 ## Player options and deck continuity
 
-Leave a name blank to use its Player N placeholder as the default, or type a name directly. Each seat independently offers Human or CPU (Easy, Normal, Hard, Expert). All-CPU spectator rounds are supported. CPUs share the same finite deck and legal moves; no private opponent cards or draw order enter their decisions. Inspect the public discard pile during play to see the same card-counting information available to Expert.
+Human names start empty; leave one blank to use Player N. CPU names are assigned automatically from difficulty (for example CPU - Normal), with numbered suffixes for duplicates. Each seat independently offers Human or CPU (Easy, Normal, Hard, Expert). All-CPU spectator rounds are supported. CPUs share the same finite deck and legal moves; no private opponent cards or draw order enter their decisions. Discard identities are hidden from humans and all CPU levels; Expert estimates opponents from the catalogue and its own hand only.
 
 Keep your hand between holes. Played cards are replaced up to eight; only an exhausted draw pile triggers a shuffle of currently discarded cards. Overshoots appear beyond the course flag with their distance, and shared reveals include action-effect descriptions.
 

@@ -1,9 +1,10 @@
-const CACHE = "mulligan-house-v3";
+const CACHE = "mulligan-house-v4";
 const FILES = [
   "./",
   "./index.html",
   "./style.css",
   "./src/app.js",
+  "./src/setup.js",
   "./src/cpu.js",
   "./src/course-view.js",
   "./src/engine.js",

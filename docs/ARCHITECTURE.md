@@ -77,7 +77,7 @@ Cache-first service worker versions the complete shell. Increment `CACHE` in `sw
 
 ## CPU information boundary
 
-`cpuObservation` in `src/cpu.js` copies an explicit allowlist: own hand, public positions/scores, public discard pile, turn order, and revealed plans/cancellations during reactions. It never includes shuffle seed, draw order, opponents’ hands or hidden locked plans. `chooseCpuMove` accepts only this projection and returns ordinary engine events. No CPU-only rule exceptions exist.
+`cpuObservation` in `src/cpu.js` copies an explicit allowlist: own hand, public positions/scores, turn order, and revealed plans/cancellations during reactions. It never includes discard identities, shuffle seed, draw order, opponents’ hands or hidden locked plans. `chooseCpuMove` accepts only this projection and returns ordinary engine events. No CPU-only rule exceptions exist.
 
 ```mermaid
 flowchart LR
@@ -88,8 +88,16 @@ flowchart LR
   Engine --> State
 ```
 
-Easy picks a random legal shot and usually passes reactions. Normal minimizes immediate landing cost and protects its own shot. Hard adds one-shot lookahead using retained cards, estimates opponents’ likely shots and evaluates cancellation chains. Expert also excludes its own hand and public discards from the catalogue when estimating opponents’ options, and spends Mulligans on smaller worthwhile improvements. These are bounded heuristics, not guaranteed win rates or an online AI service. Preparation specials (Dig, Borrow, Read) are currently used only as club faces by CPUs; CPUs exchange an unplayable hand for the same one-stroke practice swing as humans.
+Easy picks a random legal shot and usually passes reactions. Normal minimizes immediate landing cost and protects its own shot. Hard adds one-shot lookahead using retained cards, estimates opponents’ likely shots and evaluates cancellation chains. Expert excludes only its own hand from the catalogue when estimating opponents’ options, and spends Mulligans on smaller worthwhile improvements. These are bounded heuristics, not guaranteed win rates or an online AI service. Preparation specials (Dig, Borrow, Read) are currently used only as club faces by CPUs; CPUs exchange an unplayable hand for the same one-stroke practice swing as humans.
 
 CPU timers run only on their private turns, never display their hands, stop when hidden or leaving play, and resume when visible. Shared reveal, results and scorecards always wait for a human Continue action, including all-CPU spectator rounds. Work is bounded by eight cards and four targets, with cached opponent estimates per action/target; no background simulation, API or worker is needed.
 
 The optional `controller` field is backward compatible: absent means human, preserving existing v1 saves. Current saves store one of human/easy/normal/hard/expert. The deck lifecycle changes at the next hole without discarding the current save. `course-view.js` computes a common proportional scale including positions beyond the pin and behind the tee.
+
+## Randomized fixed-length courses
+
+A new 1-hole round chooses par 3, 4 or 5. Three holes have one of each, shuffled. Nine holes have two par 3s, five par 4s and two par 5s, shuffled. Eighteen holes generate front and back nines independently with that same 2/5/2 distribution (par 36 each, par 72 total).
+
+Each hole gets a random distance in five-yard steps: par 3 uses 125–225 yards, par 4 uses 275–450, and par 5 uses 475–600. These house ranges are within the [USGA par guidelines](https://www.usga.org/content/usga/home-page/handicapping/roh/Content/rules/Appendix%20F%20Establishing%20Par.htm); they are not an official course rating. Custom scorecards retain the existing 1–18 holes, 50–650 yard and par 3–6 validation.
+
+Generation runs once when a new game is submitted. The resulting scorecard is saved with the game, so resume and reload never reroll holes. Existing saved rounds keep their course. `src/setup.js` owns generation and collision-safe CPU naming; its injectable random function supports repeatable tests without exposing the deck seed.

@@ -61,8 +61,16 @@ Every physical card belongs to exactly one zone: draw pile, player hand, locked 
 - Mulligan cancels one action or a prior Mulligan. Resolve the cancellation chain in reverse order, then apply active actions.
 - A practice swing exchanges the entire hand for one stroke and uses the player's shot opportunity. It solves otherwise unplayable hands without an endless free refresh.
 - Finished players sit out the remaining shots. Actions may target only active players. Borrow may take an unplayed card from any other player's retained hand.
-- The built-in course is fictional. Enter real scorecard yardages and pars manually for any 1–18-hole course within the supported 50–650 yd range.
+- Fixed-length rounds generate randomized fictional courses as described below. Enter real scorecard yardages and pars manually for any 1–18-hole course within the supported 50–650 yd range.
 
 ## Future official fidelity
 
 Replace inferred frequencies, pairings and uncertain effects when a complete authorized rulebook or deck manifest is available. Keep the independent label until all divergences are reconciled. Any change affecting saved state needs a version increment and explicit migration or a fresh-round notice.
+
+## Randomized fixed-length courses
+
+A new 1-hole round chooses par 3, 4 or 5. Three holes have one of each, shuffled. Nine holes have two par 3s, five par 4s and two par 5s, shuffled. Eighteen holes generate front and back nines independently with that same 2/5/2 distribution (par 36 each, par 72 total).
+
+Each hole gets a random distance in five-yard steps: par 3 uses 125–225 yards, par 4 uses 275–450, and par 5 uses 475–600. These house ranges are within the [USGA par guidelines](https://www.usga.org/content/usga/home-page/handicapping/roh/Content/rules/Appendix%20F%20Establishing%20Par.htm); they are not an official course rating. Custom scorecards retain the existing 1–18 holes, 50–650 yard and par 3–6 validation.
+
+Generation runs once when a new game is submitted. The resulting scorecard is saved with the game, so resume and reload never reroll holes. Existing saved rounds keep their course. `src/setup.js` owns generation and collision-safe CPU naming; its injectable random function supports repeatable tests without exposing the deck seed.

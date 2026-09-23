@@ -7,11 +7,11 @@ export const LEVEL_HELP = {
   easy: "Casual shots and occasional Mulligans.",
   normal: "Chooses a close landing and protects its shot.",
   hard: "Plans the next shot and weighs every revealed action.",
-  expert: "Also counts the public discard pile to estimate opponents’ options.",
+  expert: "Refines opponent estimates using its own hand and spends Mulligans more precisely.",
 };
 
 // Explicit information boundary. Never pass engine state to chooseCpuMove.
-// Discards are inspectable by humans too; locked plans appear only after reveal.
+// Discard identities are private; locked plans appear only after reveal.
 export function cpuObservation(s) {
   const id = s.order[s.cursor];
   const publicPlans = s.phase === "reaction" || s.phase === "reveal" ||
@@ -21,7 +21,6 @@ export function cpuObservation(s) {
     order: s.order, hand: s.players[id].hand,
     players: s.players.map(p => ({ id: p.id, position: p.position,
       shots: p.shots, strokes: p.strokes, scores: p.scores, done: p.done })),
-    discard: s.discard,
     plans: publicPlans ? s.plans : {},
     cancels: publicPlans ? s.cancels : [],
   });
@@ -61,9 +60,9 @@ function tableCost(o, cancels, level) {
 function opponentImpact(o, target, action, level) {
   if (target === o.id || action.name === ACTIONS.fairway.name) return 0;
   const p = o.players[target];
-  // Expert removes only publicly unavailable cards and its own hand. The
+  // Expert excludes only its own cards from opponent estimates. The
   // remaining catalogue is a probability model, never a peek at the real deck.
-  const unavailable = new Set(level === "expert" ? [...o.discard, ...o.hand] : []);
+  const unavailable = new Set(level === "expert" ? o.hand : []);
   const possible = CARDS.filter(c => !unavailable.has(c.id) && legal(o, p, c.id));
   const ranked = possible.sort((a, b) => cost(landing(o, p, a.id)) - cost(landing(o, p, b.id)));
   const candidates = ranked.slice(0, Math.max(1, Math.ceil(ranked.length / 4)));

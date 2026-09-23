@@ -1,3 +1,4 @@
+import { generateCourse, playerNames } from "./setup.js";
 import { LEVELS, LEVEL_HELP, cpuObservation, chooseCpuMove } from "./cpu.js";
 import { courseScale } from "./course-view.js";
 import { CARDS, CARD_BY_ID, CLUBS, ACTIONS } from "./cards.js";
@@ -7,7 +8,6 @@ import {
   activePlayer,
   remaining,
   legalClub,
-  COURSE,
   liveEffects,
 } from "./engine.js";
 import { loadGame, saveGame, SAVE_KEY } from "./storage.js";
@@ -74,7 +74,7 @@ function home() {
     .slice(0, count)
     .map(
       (name, i) =>
-        `<div class="player-setup"><label>${badge({ id: i })}<span class="sr-only">Player ${i + 1} name</span><input name="name${i}" aria-label="Player ${i + 1} name" placeholder="Player ${i + 1}" value="${esc(name)}" maxlength="20" autocomplete="off"></label><label class="seat-type"><span>Player ${i + 1} plays as</span><select name="controller${i}" aria-describedby="seat-help${i}"><option value="human" ${controllers[i] === "human" ? "selected" : ""}>Human</option>${Object.entries(LEVELS).map(([key, label]) => `<option value="${key}" ${controllers[i] === key ? "selected" : ""}>CPU · ${label}</option>`).join("")}</select></label><small id="seat-help${i}">${LEVEL_HELP[controllers[i]] || "You choose the cards."}</small></div>`,
+        `<div class="player-setup"><label>${badge({ id: i })}<span class="sr-only">Player ${i + 1} name</span><input name="name${i}" aria-label="Player ${i + 1} name" placeholder="Player ${i + 1}" value="${esc(controllers[i] === "human" ? name : playerNames(names.slice(0, count), controllers.slice(0, count))[i])}" ${controllers[i] !== "human" ? 'readonly aria-readonly="true"' : ""} maxlength="20" autocomplete="off"></label><label class="seat-type"><span>Player ${i + 1} plays as</span><select name="controller${i}" aria-describedby="seat-help${i}"><option value="human" ${controllers[i] === "human" ? "selected" : ""}>Human</option>${Object.entries(LEVELS).map(([key, label]) => `<option value="${key}" ${controllers[i] === key ? "selected" : ""}>CPU · ${label}</option>`).join("")}</select></label><small id="seat-help${i}">${LEVEL_HELP[controllers[i]] || "You choose the cards."}</small></div>`,
     )
     .join(
       "",
@@ -92,9 +92,6 @@ function board() {
     const location = p.done ? (p.pickedUp ? "Picked up" : "Holed") : `${fmt(remaining(game, p))} yd ${p.position > h.yards ? "past hole" : p.position < 0 ? "to hole · behind tee" : "left"}`;
     return `<div class="lane"><div class="lane-label">${badge(p)}<strong>${esc(p.name)}</strong><span>${location} · ${p.strokes} ${p.strokes === 1 ? "stroke" : "strokes"}</span></div><div class="yard-track"><span class="yard-fill p${p.id}" style="position:absolute;left:${Math.min(scale.tee,ball)}%;width:${Math.abs(ball-scale.tee)}%"></span><span class="pin" style="left:${scale.pin}%"></span><span class="ball p${p.id}" style="left:${ball}%">${p.id+1}</span></div></div>`;
   }).join("")}<div class="course-axis"><span style="left:${scale.tee}%">Tee</span><span style="left:${scale.pin}%" class="hole-label">Hole</span></div><p class="course-distance">${h.yards} yards from tee to hole${scale.max > h.yards ? " · Track extends beyond the flag" : ""}</p></section>`;
-}
-function publicDiscard() {
-  return `<details class="public-discard"><summary>Public discard pile · ${game.discard.length} cards</summary><p>Everyone can inspect these cards. They return to the draw pile only when it runs out.</p><ul>${game.discard.map(id => { const c = CARD_BY_ID[id]; return `<li>${CLUBS[c.club].name} / ${ACTIONS[c.action].name}</li>`; }).join("") || "<li>No discarded cards.</li>"}</ul></details>`;
 }
 function cpuView() {
   const p = activePlayer(game);
@@ -249,7 +246,6 @@ function render() {
                 : game.phase === "results"
                   ? results()
                   : score();
-  if (screen === "game") app.insertAdjacentHTML("beforeend", publicDiscard());
   if (isCpuTurn() && !document.hidden) {
     const revision = game.revision;
     cpuTimer = setTimeout(() => {
@@ -286,7 +282,7 @@ function rememberForm() {
   const form = document.querySelector("#setup-form");
   if (!form) return;
   for (let i = 0; i < count; i++) {
-    names[i] = form.elements[`name${i}`].value;
+    if (controllers[i] === "human") names[i] = form.elements[`name${i}`].value;
     controllers[i] = form.elements[`controller${i}`].value;
   }
   roundSize = form.elements.round.value;
@@ -319,11 +315,9 @@ app.addEventListener("submit", (e) => {
                 par: Number(vals[1]),
               };
             })
-        : Array.from({ length: Number(roundSize) }, (_, i) => ({
-            ...COURSE[i % 9],
-          }));
+        : generateCourse(Number(roundSize));
     const seed = crypto.getRandomValues(new Uint32Array(1))[0];
-    const next = createGame(names.slice(0, count).map((name, i) => name.trim() || `Player ${i + 1}`), course, seed, controllers.slice(0, count));
+    const next = createGame(playerNames(names.slice(0, count), controllers.slice(0, count)), course, seed, controllers.slice(0, count));
     if (game && !confirm("Replace your saved round with a new game?")) return;
     game = next;
     screen = "game";

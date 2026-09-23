@@ -31,3 +31,9 @@ Hosted smoke test: four players, mobile 390x844, long names, private planning an
 Browser checks: 390px mobile setup with four seats and difficulty controls; 1280px desktop setup; blank placeholder inputs; mixed one-human/three-CPU planning and reactions; action descriptions on shared reveal; CPU hands absent; automatic CPU turns; results showing two balls 20 yards beyond the pin. DOM measurement confirmed markers at 92.31% against pins at 86.15%, with no horizontal overflow. No console errors observed. Corrected label encoding was confirmed on a fresh local origin after an older service-worker cache preserved the first test build.
 
 Build remains dependency-free, approximately 105 KB uncompressed including documentation. CodeRabbit did not run: its installer failed with `curl: (60) SSL certificate problem: self signed certificate in certificate chain`. Resolve the local trusted certificate chain and rerun the official installer to enable that optional review; certificate validation was not disabled.
+
+## Private discards, automatic CPU names and generated courses
+
+Supersedes the public-discard behavior described in the prior update. All 24 tests pass. New coverage checks 800 generated courses across all fixed lengths: correct per-nine par counts, distance bounds, yardage increments and varied layouts. Tests confirm automatic CPU names avoid collisions, discards cannot change any CPU observation or decision, custom scorecards are untouched, and generated courses survive save/restore without rerolling. The existing complete-game CPU simulations still pass.
+
+Browser verification: a 390px setup assigned CPU - Normal and CPU - Normal 2, made their name fields read-only, and restored the previous human name when switching back. Starting a three-hole game produced a randomized 210-yard par 3 first hole with the assigned CPU names and no discard viewer. DOM width checks showed no horizontal overflow.
