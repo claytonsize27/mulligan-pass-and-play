@@ -5,7 +5,7 @@ web
 ## Stack
 Delegated by the user's request for an efficient, self-sufficient build: static HTML, CSS and ES modules, no runtime dependencies or backend. GitHub Pages deployment target.
 ## Users
-Two to four people sharing a mobile phone for a golf card game.
+Two to four human or CPU participants on a mobile phone for a golf card game; each CPU has one of four local difficulty levels.
 ## Product Purpose
 Secretly plan shots, pass the phone, then reveal and resolve simultaneous play. Complete a round with automatic scoring.
 ## Constraints

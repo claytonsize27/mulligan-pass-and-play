@@ -23,3 +23,11 @@ The browser completed a two-player one-hole game through two 1-Putts, the scorec
 
 Hosted smoke test: four players, mobile 390x844, long names, private planning and simultaneous reveal; no horizontal overflow. Club selection retained keyboard focus. Initial GitHub Actions test/build/deploy completed successfully. Offline service-worker implementation is present; a disconnected physical-device test remains unperformed.
 
+
+## CPU and continuity update
+
+`npm test`: 20 tests pass. Added 12 complete 18-hole CPU tournaments (each difficulty with 2, 3 and 4 players), alongside the existing 24 simulated full rounds. Each transition checks 104 unique cards. Every new-hole boundary additionally checks unchanged hands, draw order, discard pile, PRNG state and reshuffle count. CPU tests prove that changing hidden opponent cards, locked plans, seed and deck order produces identical observations and decisions. Old saves with no controller field still load.
+
+Browser checks: 390px mobile setup with four seats and difficulty controls; 1280px desktop setup; blank placeholder inputs; mixed one-human/three-CPU planning and reactions; action descriptions on shared reveal; CPU hands absent; automatic CPU turns; results showing two balls 20 yards beyond the pin. DOM measurement confirmed markers at 92.31% against pins at 86.15%, with no horizontal overflow. No console errors observed. Corrected label encoding was confirmed on a fresh local origin after an older service-worker cache preserved the first test build.
+
+Build remains dependency-free, approximately 105 KB uncompressed including documentation. CodeRabbit did not run: its installer failed with `curl: (60) SSL certificate problem: self signed certificate in certificate chain`. Resolve the local trusted certificate chain and rerun the official installer to enable that optional review; certificate validation was not disabled.

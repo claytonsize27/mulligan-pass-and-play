@@ -32,7 +32,7 @@ stateDiagram-v2
   Reaction --> Results: last reaction resolves all shots
   Results --> Handoff: unfinished players / next shot
   Results --> Scorecard: all players finished
-  Scorecard --> Handoff: next hole / gather, shuffle, deal
+  Scorecard --> Handoff: next hole / retain hands and piles
   Scorecard --> Finished: final hole
   Finished --> Setup: new round
 ```
@@ -74,3 +74,22 @@ Do not treat localStorage as encrypted or adversarially secure. DOM handoff priv
 Small event-driven DOM rendering for at most four players and roughly 32 cards in hands. O(104) cloning and invariant checks are trivial at human turn speed. No animation loop or network requests per move. Build has zero compilation/package-install requirement. Browser-native system fonts avoid remote font requests.
 
 Cache-first service worker versions the complete shell. Increment `CACHE` in `sw.js` on releases. New workers wait until existing clients close, avoiding a forced mid-round update. Save schema changes require a separate version/migration decision. Future official deck data can replace the catalogue without redesigning the rendering boundary.
+
+## CPU information boundary
+
+`cpuObservation` in `src/cpu.js` copies an explicit allowlist: own hand, public positions/scores, public discard pile, turn order, and revealed plans/cancellations during reactions. It never includes shuffle seed, draw order, opponents’ hands or hidden locked plans. `chooseCpuMove` accepts only this projection and returns ordinary engine events. No CPU-only rule exceptions exist.
+
+```mermaid
+flowchart LR
+  State[Full local game state] --> Projection[Public information + own hand]
+  Projection --> CPU[Difficulty heuristic]
+  CPU --> Event[Ordinary game event]
+  Event --> Engine[Same validated engine as humans]
+  Engine --> State
+```
+
+Easy picks a random legal shot and usually passes reactions. Normal minimizes immediate landing cost and protects its own shot. Hard adds one-shot lookahead using retained cards, estimates opponents’ likely shots and evaluates cancellation chains. Expert also excludes its own hand and public discards from the catalogue when estimating opponents’ options, and spends Mulligans on smaller worthwhile improvements. These are bounded heuristics, not guaranteed win rates or an online AI service. Preparation specials (Dig, Borrow, Read) are currently used only as club faces by CPUs; CPUs exchange an unplayable hand for the same one-stroke practice swing as humans.
+
+CPU timers run only on their private turns, never display their hands, stop when hidden or leaving play, and resume when visible. Shared reveal, results and scorecards always wait for a human Continue action, including all-CPU spectator rounds. Work is bounded by eight cards and four targets, with cached opponent estimates per action/target; no background simulation, API or worker is needed.
+
+The optional `controller` field is backward compatible: absent means human, preserving existing v1 saves. Current saves store one of human/easy/normal/hard/expert. The deck lifecycle changes at the next hole without discarding the current save. `course-view.js` computes a common proportional scale including positions beyond the pin and behind the tee.

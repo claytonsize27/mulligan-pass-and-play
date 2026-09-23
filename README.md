@@ -2,7 +2,7 @@
 
 [Play the live game](https://claytonsize27.github.io/mulligan-pass-and-play/)
 
-A mobile-first, offline-capable golf card game for **2–4 people sharing one phone**. Static files, zero runtime dependencies, no server, no accounts, no paid integrations. Independent **house edition** based on the official game's public tutorial and card examples.
+A mobile-first, offline-capable golf card game for **2–4 human or CPU players on one phone**. Static files, zero runtime dependencies, no server, no accounts, no paid integrations. Independent **house edition** based on the official game's public tutorial and card examples.
 
 ## Run and verify
 
@@ -42,3 +42,11 @@ Designed for a **public GitHub repository on GitHub Free** and the default `gith
 
 Deployment status is recorded in `docs/DEPLOYMENT.md`; this README does not imply that publishing has already happened.
 
+
+## Player options and deck continuity
+
+Leave a name blank to use its Player N placeholder as the default, or type a name directly. Each seat independently offers Human or CPU (Easy, Normal, Hard, Expert). All-CPU spectator rounds are supported. CPUs share the same finite deck and legal moves; no private opponent cards or draw order enter their decisions. Inspect the public discard pile during play to see the same card-counting information available to Expert.
+
+Keep your hand between holes. Played cards are replaced up to eight; only an exhausted draw pile triggers a shuffle of currently discarded cards. Overshoots appear beyond the course flag with their distance, and shared reveals include action-effect descriptions.
+
+`src/cpu.js` contains the observation boundary and strategies; `src/course-view.js` provides course scale geometry. `test/cpu.test.js` covers hidden-information independence, legacy saves, all difficulty levels and card continuity across holes.

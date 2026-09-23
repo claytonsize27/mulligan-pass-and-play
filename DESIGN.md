@@ -67,3 +67,6 @@ The design launcher could not initialize its cache. User explicitly requested au
 - Don't turn the game screen into a promotional landing page or require external font downloads.
 
 Documentation was reconciled with source inline after the documenter agent hit its usage limit. Visual screenshots were inspected by the primary agent; the independent finish review was source-only.
+
+### CPU and course refinements
+Each player seat groups an empty name input with a Human/CPU difficulty selector and a brief strategy description. CPU hands never render; a covered status replaces human handoff controls while the CPU acts. Course lanes share an expanded proportional scale when any ball overshoots. Shared actions include effect text, and a collapsed public discard list supports transparent card counting.

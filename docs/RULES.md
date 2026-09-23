@@ -51,7 +51,7 @@ Other faces: Rough 16; Slice 16; Hook 12; Sand trap 12; Out of bounds 8; Clear f
 
 The two lists are expanded in order; club index `i` pairs with action index `(i * 37) % 104`. Since 37 and 104 are coprime, every action occurrence is used exactly once. Pairings are deterministic, inferred, and editable in `src/cards.js`.
 
-Every physical card belongs to exactly one zone: draw pile, player hand, locked plan, or discard pile. Playing a face spends the entire card. Cancellation never returns an action card to its owner. Discards are Fisher–Yates shuffled only when the draw pile runs out. At each new hole all 104 cards are gathered, shuffled, and redealt. No unlimited card spawning. The first seed comes from browser cryptographic randomness; a stored PRNG state makes reloads deterministic.
+Every physical card belongs to exactly one zone: draw pile, player hand, locked plan, or discard pile. Playing a face spends the entire card. Cancellation never returns an action card to its owner. Discards are Fisher–Yates shuffled only when the draw pile runs out. Hands, the draw pile and the discard pile persist across holes. Only starting a new game gathers, shuffles and deals all 104 cards. This deck lifecycle follows the user’s explicit clarification. No unlimited card spawning. The first seed comes from browser cryptographic randomness; a stored PRNG state makes reloads deterministic.
 
 ## Pass-and-play adaptations
 

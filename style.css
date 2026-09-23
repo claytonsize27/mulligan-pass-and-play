@@ -1291,3 +1291,17 @@ dialog summary {
     grid-template-columns: 24px minmax(0, 1fr) minmax(0, 1fr);
   }
 }
+.player-setup { min-width: 0; }
+.player-setup .seat-type { display: block; margin-top: 8px; }
+.seat-type span { display: block; font-size: .875rem; }
+.seat-type select { width: 100%; }
+.player-setup small { display: block; margin-top: 6px; color: var(--muted); }
+input::placeholder { color: #52675e; opacity: 1; }
+.course-axis { position: relative; height: 22px; margin: 24px 12px 0; font-size: .75rem; }
+.course-axis span { position: absolute; }
+.course-axis .hole-label { transform: translateX(-100%); }
+.course-distance { color: #d3dfd4; font-size: .75rem; margin: 4px 0 0; }
+.action-effect { display: block; max-width: 30ch; line-height: 1.45; }
+.public-discard { margin: 24px 0; }
+.public-discard summary { cursor: pointer; padding: 12px 0; }
+.public-discard ul { max-height: 240px; overflow: auto; }

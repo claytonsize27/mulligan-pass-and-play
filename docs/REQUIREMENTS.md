@@ -25,3 +25,12 @@ Online multiplayer, paid hosting, accounts, cloud saves, AI players, a native ap
 ## Acceptance checks
 
 Full simulated rounds finish for every player count; cards remain conserved across every transition. Mobile UI supports setup, plan, reveal, reactions and scorecard. Refresh covers hands and preserves the committed state. Build includes only public files, and relative URLs support repository subpaths.
+
+## User refinements (22 September 2026)
+
+- Player N labels are placeholders; typed values start empty. Blank names fall back to unique seat labels, with duplicate-name validation unchanged.
+- All course lanes use one yard scale. Overshoots extend beyond the flag and label yards past the hole; backward overshoots can extend behind the tee.
+- Every planned action includes its brief effect description on reveal and reactions; cancelled actions remain labelled cancelled.
+- Hands, deck order and discards persist across holes. Refill to eight after resolution. Recycle only currently discarded cards on draw exhaustion, never held or committed cards.
+- Each of 2–4 seats selects Human, Easy CPU, Normal CPU, Hard CPU or Expert CPU. Any mix, including all CPUs, is supported.
+- CPUs receive no opponent hand, hidden plan, seed or deck order. Expert may reason from the publicly inspectable discard pile and inferred deck catalogue. No paid AI or cloud computation.

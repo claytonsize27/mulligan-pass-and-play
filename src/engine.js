@@ -61,23 +61,16 @@ export function activePlayer(s) {
   return s.players[s.order[s.cursor]];
 }
 function startHole(s) {
-  s.deck = shuffle(
-    s,
-    CARDS.map((c) => c.id),
-  );
-  s.discard = [];
   s.plans = {};
   s.cancels = [];
   s.events = [];
   s.round = 1;
   for (const p of s.players) {
-    p.hand = [];
     p.position = 0;
     p.strokes = 0;
     p.shots = 0;
     p.done = false;
     p.pickedUp = false;
-    draw(s, p, HAND_SIZE);
   }
   startPlanning(s);
 }
@@ -97,6 +90,7 @@ export function createGame(
   names,
   course = COURSE.slice(0, 3),
   seed = Date.now() >>> 0,
+  controllers = names.map(() => "human"),
 ) {
   insist(
     Array.isArray(names) && names.length >= 2 && names.length <= 4,
@@ -128,15 +122,19 @@ export function createGame(
       ),
     "Use 1–18 holes, 50–650 yards and par 3–6.",
   );
+  insist(controllers.length === names.length && controllers.every(c => ["human", "easy", "normal", "hard", "expert"].includes(c)), "Choose a valid player type.");
   const s = {
     version: VERSION,
     seed: seed >>> 0,
-    players: names.map((name, id) => ({ id, name: name.trim(), scores: [] })),
+    players: names.map((name, id) => ({ id, name: name.trim(), scores: [], hand: [], controller: controllers[id] })),
     course: structuredClone(course),
     hole: 0,
     reshuffles: 0,
     revision: 0,
   };
+  s.deck = shuffle(s, CARDS.map(c => c.id));
+  s.discard = [];
+  for (const p of s.players) draw(s, p, HAND_SIZE);
   startHole(s);
   return s;
 }
@@ -467,6 +465,7 @@ export function assertGame(s) {
   insist(
     s.players.every(
       (p, i) =>
+        (p.controller === undefined || ["human", "easy", "normal", "hard", "expert"].includes(p.controller)) &&
         p.id === i &&
         typeof p.name === "string" &&
         p.name.length <= 20 &&

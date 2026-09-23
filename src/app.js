@@ -1,3 +1,5 @@
+import { LEVELS, LEVEL_HELP, cpuObservation, chooseCpuMove } from "./cpu.js";
+import { courseScale } from "./course-view.js";
 import { CARDS, CARD_BY_ID, CLUBS, ACTIONS } from "./cards.js";
 import {
   createGame,
@@ -18,7 +20,9 @@ let game = loaded.state,
   special = null,
   peek = null,
   count = 2;
-let names = ["Player 1", "Player 2", "Player 3", "Player 4"];
+let names = ["", "", "", ""];
+let controllers = ["human", "human", "human", "human"];
+let cpuTimer;
 let roundSize = "3",
   custom = "280,4\n150,3\n475,5",
   problem = loaded.error || "",
@@ -66,11 +70,11 @@ function act(e) {
   }
 }
 function home() {
-  return `<section class="setup"><div class="setup-intro"><h1>Meet you<br>on the first tee.</h1><p class="lede">A round of cards.<br>A few friendly rivalries.</p><div class="tee-board" aria-hidden="true">${flag}<span class="tee-line"></span><span class="tee-ball"></span><span class="tee-label">ONE PHONE. EVERYONE PLAYS.</span></div><p class="edition">Independent house edition <span>·</span> Based on Mulligan</p></div><div class="setup-form"><h2>Your group</h2><p>Keep your hand to yourself. Pass the phone after each shot is locked.</p>${game ? `<div class="resume"><div><strong>Your round is waiting</strong><span>Hole ${game.hole + 1} of ${game.course.length} · ${game.players.map((p) => esc(p.name)).join(", ")}</span></div>${button("Resume round", "resume")}</div>` : ""}<form id="setup-form"><fieldset><legend>Players</legend><div class="segments">${[2, 3, 4].map((n) => button(`${n} players`, "count", "segment", `type="button" data-count="${n}" aria-pressed="${count === n}"`)).join("")}</div></fieldset><div class="names">${names
+  return `<section class="setup"><div class="setup-intro"><h1>Meet you<br>on the first tee.</h1><p class="lede">A round of cards.<br>A few friendly rivalries.</p><div class="tee-board" aria-hidden="true">${flag}<span class="tee-line"></span><span class="tee-ball"></span><span class="tee-label">ONE PHONE. EVERYONE PLAYS.</span></div><p class="edition">Independent house edition <span>·</span> Based on Mulligan</p></div><div class="setup-form"><h2>Your group</h2><p>Choose people or CPUs for each seat. Pass the phone between human players.</p>${game ? `<div class="resume"><div><strong>Your round is waiting</strong><span>Hole ${game.hole + 1} of ${game.course.length} · ${game.players.map((p) => esc(p.name)).join(", ")}</span></div>${button("Resume round", "resume")}</div>` : ""}<form id="setup-form"><fieldset><legend>Players</legend><div class="segments">${[2, 3, 4].map((n) => button(`${n} players`, "count", "segment", `type="button" data-count="${n}" aria-pressed="${count === n}"`)).join("")}</div></fieldset><div class="names">${names
     .slice(0, count)
     .map(
       (name, i) =>
-        `<label>${badge({ id: i })}<span class="sr-only">Player ${i + 1} name</span><input name="name${i}" aria-label="Player ${i + 1} name" value="${esc(name)}" required maxlength="20" autocomplete="off"></label>`,
+        `<div class="player-setup"><label>${badge({ id: i })}<span class="sr-only">Player ${i + 1} name</span><input name="name${i}" aria-label="Player ${i + 1} name" placeholder="Player ${i + 1}" value="${esc(name)}" maxlength="20" autocomplete="off"></label><label class="seat-type"><span>Player ${i + 1} plays as</span><select name="controller${i}" aria-describedby="seat-help${i}"><option value="human" ${controllers[i] === "human" ? "selected" : ""}>Human</option>${Object.entries(LEVELS).map(([key, label]) => `<option value="${key}" ${controllers[i] === key ? "selected" : ""}>CPU · ${label}</option>`).join("")}</select></label><small id="seat-help${i}">${LEVEL_HELP[controllers[i]] || "You choose the cards."}</small></div>`,
     )
     .join(
       "",
@@ -82,7 +86,22 @@ function top() {
 }
 function board() {
   const h = game.course[game.hole];
-  return `<section class="course-board" aria-label="Player positions"><div class="course-heading"><span>On the course</span><span>Shot ${game.round}</span></div>${game.players.map((p) => `<div class="lane"><div class="lane-label">${badge(p)}<strong>${esc(p.name)}</strong><span>${p.done ? (p.pickedUp ? "Picked up" : "Holed") : `${fmt(remaining(game, p))} yd left`} · ${p.strokes} ${p.strokes === 1 ? "stroke" : "strokes"}</span></div><div class="yard-track"><span class="yard-fill p${p.id}" style="width:${Math.max(0, Math.min(100, (p.position / h.yards) * 100))}%"></span><span class="ball p${p.id}" style="left:${Math.max(0, Math.min(100, (p.position / h.yards) * 100))}%">${p.id + 1}</span><span class="pin"></span></div></div>`).join("")}<div class="yard-labels"><span>Tee</span><span>${h.yards} yards</span><span>Hole</span></div></section>`;
+  const scale = courseScale(h.yards, game.players.map(p => p.position));
+  return `<section class="course-board" aria-label="Player positions"><div class="course-heading"><span>On the course</span><span>Shot ${game.round}</span></div>${game.players.map(p => {
+    const ball = scale.at(p.position);
+    const location = p.done ? (p.pickedUp ? "Picked up" : "Holed") : `${fmt(remaining(game, p))} yd ${p.position > h.yards ? "past hole" : p.position < 0 ? "to hole · behind tee" : "left"}`;
+    return `<div class="lane"><div class="lane-label">${badge(p)}<strong>${esc(p.name)}</strong><span>${location} · ${p.strokes} ${p.strokes === 1 ? "stroke" : "strokes"}</span></div><div class="yard-track"><span class="yard-fill p${p.id}" style="position:absolute;left:${Math.min(scale.tee,ball)}%;width:${Math.abs(ball-scale.tee)}%"></span><span class="pin" style="left:${scale.pin}%"></span><span class="ball p${p.id}" style="left:${ball}%">${p.id+1}</span></div></div>`;
+  }).join("")}<div class="course-axis"><span style="left:${scale.tee}%">Tee</span><span style="left:${scale.pin}%" class="hole-label">Hole</span></div><p class="course-distance">${h.yards} yards from tee to hole${scale.max > h.yards ? " · Track extends beyond the flag" : ""}</p></section>`;
+}
+function publicDiscard() {
+  return `<details class="public-discard"><summary>Public discard pile · ${game.discard.length} cards</summary><p>Everyone can inspect these cards. They return to the draw pile only when it runs out.</p><ul>${game.discard.map(id => { const c = CARD_BY_ID[id]; return `<li>${CLUBS[c.club].name} / ${ACTIONS[c.action].name}</li>`; }).join("") || "<li>No discarded cards.</li>"}</ul></details>`;
+}
+function cpuView() {
+  const p = activePlayer(game);
+  return `${top()}<section class="handoff"><div class="handoff-emblem">${badge(p)}</div><h2>${esc(p.name)} is ${game.stage === "reaction" ? "reviewing the shots" : "planning a shot"}.</h2><p>CPU · ${LEVELS[p.controller]}. Its hand stays private.</p></section>${board()}`;
+}
+function isCpuTurn() {
+  return screen === "game" && ["handoff", "plan", "reaction"].includes(game.phase) && LEVELS[activePlayer(game).controller];
 }
 function handoff() {
   const p = activePlayer(game);
@@ -107,7 +126,7 @@ function plans() {
     .map((id) => {
       const p = game.players[id],
         plan = game.plans[id];
-      return `<div class="revealed-row">${badge(p)}<div><strong>${esc(p.name)}</strong><p>${plan.rest ? "Practice swing · exchange hand" : `${CLUBS[CARD_BY_ID[plan.club].club].name} <b>${CLUBS[CARD_BY_ID[plan.club].club].yards} yd</b>`}</p></div><div>${plan.action ? `<strong class="${cancelled.has("a" + id) ? "cancelled" : ""}">${ACTIONS[CARD_BY_ID[plan.action].action].name}</strong><p>to ${esc(game.players[plan.target].name)}${cancelled.has("a" + id) ? " · cancelled" : ""}</p>` : "<span>+1 stroke</span>"}</div></div>`;
+      return `<div class="revealed-row">${badge(p)}<div><strong>${esc(p.name)}</strong><p>${plan.rest ? "Practice swing · exchange hand" : `${CLUBS[CARD_BY_ID[plan.club].club].name} <b>${CLUBS[CARD_BY_ID[plan.club].club].yards} yd</b>`}</p></div><div>${plan.action ? `<strong class="${cancelled.has("a" + id) ? "cancelled" : ""}">${ACTIONS[CARD_BY_ID[plan.action].action].name}</strong><p>to ${esc(game.players[plan.target].name)}${cancelled.has("a" + id) ? " · cancelled" : ""}</p><small class="action-effect">${esc(ACTIONS[CARD_BY_ID[plan.action].action].text)}</small>` : "<span>+1 stroke</span>"}</div></div>`;
     })
     .join(
       "",
@@ -207,6 +226,7 @@ function score() {
 }
 let renderedPhase = "";
 function render() {
+  clearTimeout(cpuTimer);
   const phase = screen === "home" ? "home" : game.phase;
   const focused = document.activeElement;
   const key = focused?.closest("[data-do]")?.dataset;
@@ -214,7 +234,9 @@ function render() {
   app.innerHTML =
     screen === "home"
       ? home()
-      : game.phase === "handoff"
+      : isCpuTurn()
+        ? cpuView()
+        : game.phase === "handoff"
         ? handoff()
         : game.phase === "plan"
           ? planning()
@@ -227,6 +249,14 @@ function render() {
                 : game.phase === "results"
                   ? results()
                   : score();
+  if (screen === "game") app.insertAdjacentHTML("beforeend", publicDiscard());
+  if (isCpuTurn() && !document.hidden) {
+    const revision = game.revision;
+    cpuTimer = setTimeout(() => {
+      if (isCpuTurn() && game.revision === revision && !document.hidden)
+        act(chooseCpuMove(cpuObservation(game), activePlayer(game).controller));
+    }, game.phase === "handoff" ? 450 : 200);
+  }
   if (phase === renderedPhase) {
     let replacement;
     if (key) {
@@ -255,12 +285,15 @@ function render() {
 function rememberForm() {
   const form = document.querySelector("#setup-form");
   if (!form) return;
-  for (let i = 0; i < count; i++) names[i] = form.elements[`name${i}`].value;
+  for (let i = 0; i < count; i++) {
+    names[i] = form.elements[`name${i}`].value;
+    controllers[i] = form.elements[`controller${i}`].value;
+  }
   roundSize = form.elements.round.value;
   if (form.elements.custom) custom = form.elements.custom.value;
 }
 app.addEventListener("change", (e) => {
-  if (e.target.name === "round") {
+  if (e.target.name === "round" || e.target.name?.startsWith("controller")) {
     rememberForm();
     render();
   }
@@ -290,7 +323,7 @@ app.addEventListener("submit", (e) => {
             ...COURSE[i % 9],
           }));
     const seed = crypto.getRandomValues(new Uint32Array(1))[0];
-    const next = createGame(names.slice(0, count), course, seed);
+    const next = createGame(names.slice(0, count).map((name, i) => name.trim() || `Player ${i + 1}`), course, seed, controllers.slice(0, count));
     if (game && !confirm("Replace your saved round with a new game?")) return;
     game = next;
     screen = "game";
@@ -425,6 +458,8 @@ document
   .querySelector("#close-help")
   .addEventListener("click", () => document.querySelector("#help").close());
 document.addEventListener("visibilitychange", () => {
+  clearTimeout(cpuTimer);
+  if (!document.hidden) { render(); return; }
   if (
     document.hidden &&
     game &&
