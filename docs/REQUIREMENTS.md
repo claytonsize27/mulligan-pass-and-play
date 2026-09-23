@@ -33,7 +33,7 @@ Full simulated rounds finish for every player count; cards remain conserved acro
 - Every planned action includes its brief effect description on reveal and reactions; cancelled actions remain labelled cancelled.
 - Hands, deck order and discards persist across holes. Refill to eight after resolution. Recycle only currently discarded cards on draw exhaustion, never held or committed cards.
 - Each of 2–4 seats selects Human, Easy CPU, Normal CPU, Hard CPU or Expert CPU. Any mix, including all CPUs, is supported.
-- CPUs receive no opponent hand, hidden plan, seed or deck order. Discard identities are hidden from both humans and CPUs. Expert may reason from its own hand and the inferred deck catalogue. No paid AI or cloud computation.
+- CPUs receive no opponent hand, hidden plan, seed or deck order. Discard identities are hidden from both humans and CPUs. Expert may reason from its own hand, remembered publicly revealed cards and the inferred deck catalogue. No paid AI or cloud computation.
 
 ## Latest refinements
 
@@ -44,3 +44,13 @@ Fixed round lengths generate fresh yardages and shuffled par order. Par distribu
 ## Reaction and mobile-selector refinements (23 September 2026)
 
 Changing a seat type updates its name/read-only state and description without replacing or refocusing the native select. This avoids reopening the mobile picker. During reactions, Undo last Mulligan reverses the current player's unconfirmed choices in reverse order, including a Mulligan aimed at another Mulligan. Passing or finishing reactions locks those choices. Covers, saves and reloads do not confirm them. Shot results label restored actions beside the original action and distinguish actions still cancelled or ignored by a putt/practice swing.
+
+## CPU tuning and automatic flow (23 September 2026)
+
+New game names: Easy = Bobby Fairways; Normal (the requested Medium tier) = Grant Horvat; Hard = Bryson Dechambeau; Expert = Tiger Woods. Dropdown labels stay unchanged. Repeated names get numeric suffixes; human-name collisions are avoided. Existing saves retain names.
+
+Relative design targets are 6/7/9/10, not externally calibrated ratings. Easy no longer plays random shots or randomly declines protection: all levels evaluate legal combinations and prioritize exact finishes. Normal adds limited planning and tactical targets; Hard weighs sabotage and reactions more strongly; Expert also evaluates next-shot club/action combinations and remembers public card sightings. CPU preparation specials remain club-only, as before.
+
+`publicPlayed` contains only club/action cards from resolved, publicly revealed plans. No private discards, opponent hands or draw order enter this memory. It is cleared on discard recycling, conservatively forgetting prior sightings when cards may re-enter play. Old saves start with empty memory. The discard pile remains uninspectable. No API, paid AI or background training is used.
+
+`flow.js` returns automatic transitions for shared reveal, results and hole scorecards whenever CPUs are involved. CPU turns run consecutively; human private planning/reactions, including undo, never auto-confirm. Human privacy handoffs remain explicit. Results/scorecards stay visible briefly (1.8 seconds); Pause autoplay stops advancement and CPU activity until resumed. Hidden tabs and Save & leave cancel timers. All-human games retain manual flow; all-CPU games can finish without clicks, stopping at final results.

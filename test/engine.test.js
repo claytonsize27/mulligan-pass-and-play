@@ -158,6 +158,7 @@ test("cancellation chains restore original effect and conserve cards", () => {
   s = move(s, { type: "CANCEL", card: m1, target: "x0" });
   assert.ok(!liveEffects(s).has("a0"));
   s = move(s, { type: "PASS" });
+  assert.ok(s.publicPlayed.length >= 4);
   assert.equal(s.players[0].position, 150);
   assert.ok(s.results[0].effects.some(e => e.includes("Rough (restored:")));
   assertGame(s);
@@ -228,8 +229,10 @@ test("dig recycles actual discard when deck is empty", () => {
   const id = give(s, 0, (c) => c.action === "dig");
   s.discard.push(...s.deck);
   s.deck = [];
+  s.publicPlayed = [s.discard[0]];
   s = move(s, { type: "ANYTIME", card: id, cards: [s.players[0].hand[0]] });
   assert.equal(s.reshuffles, 1);
+  assert.deepEqual(s.publicPlayed, []);
   assertGame(s);
 });
 test("save restore covers private hands; corrupt save and quota failures are handled", () => {

@@ -34,9 +34,9 @@ test("generated courses obey exact par mixes on each nine and yardage bounds", (
 });
 test("CPU names are automatic, unique and do not replace human names", () => {
   assert.deepEqual(playerNames(["Alex", "old name", "", ""], ["human", "normal", "normal", "expert"]),
-    ["Alex", "CPU - Normal", "CPU - Normal 2", "CPU - Expert"]);
-  assert.deepEqual(playerNames(["CPU - Easy", "", ""], ["human", "easy", "easy"]),
-    ["CPU - Easy", "CPU - Easy 2", "CPU - Easy 3"]);
+    ["Alex", "Grant Horvat", "Grant Horvat 2", "Tiger Woods"]);
+  assert.deepEqual(playerNames(["Bobby Fairways", "", ""], ["human", "easy", "easy"]),
+    ["Bobby Fairways", "Bobby Fairways 2", "Bobby Fairways 3"]);
   assert.deepEqual(playerNames(["", "Sam"], ["human", "human"]), ["Player 1", "Sam"]);
 });
 test("discard contents cannot affect CPU observations or choices at any difficulty", () => {

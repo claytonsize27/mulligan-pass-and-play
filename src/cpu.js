@@ -4,7 +4,7 @@ export const LEVELS = {
   easy: "Easy", normal: "Normal", hard: "Hard", expert: "Expert",
 };
 export const LEVEL_HELP = {
-  easy: "Casual shots and occasional Mulligans.",
+  easy: "Chooses sensible shots and protects them with Mulligans.",
   normal: "Chooses a close landing and protects its shot.",
   hard: "Plans the next shot and weighs every revealed action.",
   expert: "Refines opponent estimates using its own hand and spends Mulligans more precisely.",
@@ -21,6 +21,7 @@ export function cpuObservation(s) {
     order: s.order, hand: s.players[id].hand,
     players: s.players.map(p => ({ id: p.id, position: p.position,
       shots: p.shots, strokes: p.strokes, scores: p.scores, done: p.done })),
+    remembered: [...(s.publicPlayed || [])],
     plans: publicPlans ? s.plans : {},
     cancels: publicPlans ? s.cancels.map(({player, target}) => ({player, target})) : [],
   });
@@ -53,16 +54,16 @@ function tableCost(o, cancels, level) {
       .map(i => ACTIONS[CARD_BY_ID[o.plans[i].action].action]);
     const penalty = CARD_BY_ID[plan.club].club === "putt" ? 0 :
       actions.reduce((n, a) => n + (a.penalty || 0), 0);
-    const weight = id === o.id ? 1 : level === "normal" ? 0 : -0.35;
+    const weight = id === o.id ? 1 : level === "easy" ? 0 : level === "normal" ? -0.2 : -0.35;
     return sum + weight * (cost(landing(o, o.players[id], plan.club, actions)) + penalty * 100);
   }, 0);
 }
 function opponentImpact(o, target, action, level) {
   if (target === o.id || action.name === ACTIONS.fairway.name) return 0;
   const p = o.players[target];
-  // Expert excludes only its own cards from opponent estimates. The
+  // Expert excludes its own cards and remembered publicly played cards. The
   // remaining catalogue is a probability model, never a peek at the real deck.
-  const unavailable = new Set(level === "expert" ? o.hand : []);
+  const unavailable = new Set(level === "expert" ? [...o.hand, ...(o.remembered || [])] : o.hand);
   const possible = CARDS.filter(c => !unavailable.has(c.id) && legal(o, p, c.id));
   const ranked = possible.sort((a, b) => cost(landing(o, p, a.id)) - cost(landing(o, p, b.id)));
   const candidates = ranked.slice(0, Math.max(1, Math.ceil(ranked.length / 4)));
@@ -75,42 +76,57 @@ export function chooseCpuMove(o, level, random = Math.random) {
   if (o.phase === "handoff") return { type: "OPEN" };
   if (o.phase === "reaction") {
     const card = o.hand.find(id => CARD_BY_ID[id].action === "mulligan");
-    if (!card || (level === "easy" && random() < .8)) return { type: "PASS" };
+    if (!card) return { type: "PASS" };
     const off = cancelled(o.cancels);
     const targets = [...o.order.filter(i => o.plans[i].action).map(i => `a${i}`),
       ...o.cancels.map((_, i) => `x${i}`)].filter(t => !off.has(t));
     const baseline = tableCost(o, o.cancels, level);
     const ranked = targets.map(target => ({ target, benefit: baseline - tableCost(o,
       [...o.cancels, { player: o.id, target }], level) })).sort((a, b) => b.benefit - a.benefit);
-    if (ranked[0]?.benefit > (level === "expert" ? 12 : 25))
+    if (ranked[0]?.benefit > (level === "expert" ? 12 : level === "hard" ? 18 : 25))
       return { type: "CANCEL", card, target: ranked[0].target };
     return { type: "PASS" };
   }
   if (o.phase !== "plan") throw new Error("CPU cannot act on this screen.");
   const p = o.players[o.id], choices = [];
-  const impactCache = new Map();
+  const impactCache = new Map(), futureCache = new Map();
   for (const club of o.hand.filter(id => legal(o, p, id))) {
     for (const action of o.hand.filter(id => id !== club && !ACTIONS[CARD_BY_ID[id].action].anytime)) {
       const effect = ACTIONS[CARD_BY_ID[action].action];
       for (const target of o.order) {
         const d = landing(o, p, club, target === o.id ? [effect] : []);
         let score = cost(d) + (target === o.id && CARD_BY_ID[club].club !== "putt" ? (effect.penalty || 0) * 100 : 0);
-        if (level === "hard" || level === "expert") {
+        if (level !== "easy") {
           const next = o.hand.filter(id => id !== club && id !== action && CARD_BY_ID[id].club !== "driver");
-          if (d > 25 && next.length) score += .45 * Math.min(...next.filter(id => CARD_BY_ID[id].club !== "putt")
+          if (d > 25 && next.length) score += (level === "normal" ? .15 : level === "hard" ? .15 : .1) * Math.min(...next.filter(id => CARD_BY_ID[id].club !== "putt")
             .map(id => cost(Math.abs(d - CLUBS[CARD_BY_ID[id].club].yards))), d);
+          if (level === "expert" && d > 25) {
+            const key = `${club}:${action}:${d}`;
+            if (!futureCache.has(key)) {
+              let best = cost(d);
+              const nextPlayer = {...p, shots: p.shots + 1, position: o.yards - d};
+              for (const c of next.filter(id => legal(o, nextPlayer, id)))
+                for (const a of next.filter(id => id !== c && !ACTIONS[CARD_BY_ID[id].action].anytime)) {
+                  const effect = ACTIONS[CARD_BY_ID[a].action];
+                  best = Math.min(best, cost(landing(o, nextPlayer, c)),
+                    cost(landing(o, nextPlayer, c, [effect])) + (effect.penalty || 0) * 100);
+                }
+              futureCache.set(key, best);
+            }
+            score += .15 * futureCache.get(key);
+          }
           const key = `${target}:${CARD_BY_ID[action].action}`;
           if (!impactCache.has(key)) impactCache.set(key, opponentImpact(o, target, effect, level));
-          score -= .35 * impactCache.get(key);
+          score -= (level === "normal" ? .12 : level === "hard" ? .2 : .45) * impactCache.get(key);
           // Preserve a putter and Mulligans when other choices land equally well.
           score += (CARD_BY_ID[action].club === "putt" ? 4 : 0) + (CARD_BY_ID[club].action === "mulligan" ? 3 : 0);
         } else if (target !== o.id) score -= (effect.penalty || 0) * 10 + (effect.delta < 0 || effect.half ? 2 : 0);
+        if (d < .001 && !(target === o.id && effect.penalty)) score -= 1000;
         choices.push({ move: { type: "COMMIT", club, action, target }, score });
       }
     }
   }
   if (!choices.length) return { type: "REST" };
-  if (level === "easy") return choices[Math.floor(random() * choices.length)].move;
   choices.sort((a, b) => a.score - b.score);
   return choices[0].move;
 }

@@ -1,3 +1,4 @@
+import { automaticEvent } from "./flow.js";
 import { generateCourse, playerNames } from "./setup.js";
 import { LEVELS, LEVEL_HELP, cpuObservation, chooseCpuMove } from "./cpu.js";
 import { courseScale } from "./course-view.js";
@@ -23,6 +24,7 @@ let game = loaded.state,
 let names = ["", "", "", ""];
 let controllers = ["human", "human", "human", "human"];
 let cpuTimer;
+let autoplayPaused = false;
 let roundSize = "3",
   custom = "280,4\n150,3\n475,5",
   problem = loaded.error || "",
@@ -82,7 +84,7 @@ function home() {
 }
 function top() {
   const h = game.course[game.hole];
-  return `<div class="game-top"><div><h1>Hole ${game.hole + 1}<span> / ${game.course.length}</span></h1><p>${esc(h.name || "Custom hole")} <span>·</span> ${h.yards} yd <span>·</span> Par ${h.par}</p></div><button class="quiet" data-do="home">Save & leave</button></div>`;
+  return `<div class="game-top"><div><h1>Hole ${game.hole + 1}<span> / ${game.course.length}</span></h1><p>${esc(h.name || "Custom hole")} <span>·</span> ${h.yards} yd <span>·</span> Par ${h.par}</p></div><div class="button-row">${game.phase !== "finished" && game.players.some(p => LEVELS[p.controller]) ? button(autoplayPaused ? "Resume autoplay" : "Pause autoplay", "autoplay", "quiet") : ""}<button class="quiet" data-do="home">Save & leave</button></div></div>`;
 }
 function board() {
   const h = game.course[game.hole];
@@ -246,12 +248,13 @@ function render() {
                 : game.phase === "results"
                   ? results()
                   : score();
-  if (isCpuTurn() && !document.hidden) {
+  const auto = screen === "game" ? automaticEvent(game) : null;
+  if ((isCpuTurn() || auto) && !autoplayPaused && !document.hidden) {
     const revision = game.revision;
     cpuTimer = setTimeout(() => {
-      if (isCpuTurn() && game.revision === revision && !document.hidden)
-        act(chooseCpuMove(cpuObservation(game), activePlayer(game).controller));
-    }, game.phase === "handoff" ? 450 : 200);
+      if (screen === "game" && game.revision === revision && !document.hidden && !autoplayPaused)
+        act(auto || chooseCpuMove(cpuObservation(game), activePlayer(game).controller));
+    }, auto ? (game.phase === "results" || game.phase === "score" ? 1800 : 800) : 180);
   }
   if (phase === renderedPhase) {
     let replacement;
@@ -334,6 +337,7 @@ app.addEventListener("submit", (e) => {
     const next = createGame(playerNames(names.slice(0, count), controllers.slice(0, count)), course, seed, controllers.slice(0, count));
     if (game && !confirm("Replace your saved round with a new game?")) return;
     game = next;
+    autoplayPaused = false;
     screen = "game";
     problem = "";
     persist();
@@ -350,6 +354,10 @@ app.addEventListener("click", (e) => {
   const id = b.dataset.id,
     target = Number(b.dataset.target);
   switch (b.dataset.do) {
+    case "autoplay":
+      autoplayPaused = !autoplayPaused;
+      render();
+      break;
     case "count":
       rememberForm();
       count = Number(b.dataset.count);

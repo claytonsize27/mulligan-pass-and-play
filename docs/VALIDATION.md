@@ -43,3 +43,11 @@ Browser verification: a 390px setup assigned CPU - Normal and CPU - Normal 2, ma
 All 26 tests pass, including cancellation-of-cancellation restoration labels, three-deep chains, repeated reverse-order undo, exact hand/discard/deck conservation, covered/reloaded pending reactions, and rejection of undo after passing or finishing. Existing complete-round simulations pass. The supplied MOV could not be decoded reliably by the local OpenCV reader (invalid H.264 NAL units); no claim of successful video inspection is made. The iOS picker issue is addressed by retaining the native select instead of replacing and refocusing it. Native iOS verification is not available in this environment.
 
 Browser check: changed CPU/Human selectors, started a two-human game, cancelled Rough with the only Mulligan, undid it (one available card and live Rough restored), replayed it, passed and finished reactions. Results showed Rough (cancelled by Mulligan). No console errors or horizontal overflow at a 390px viewport.
+
+## CPU calibration
+
+A reproducible 48-round benchmark used nine holes, seeds 1 through 48 and rotating seats for Easy/Normal/Hard/Expert. Final aggregate strokes (lower is better): 1505 / 1478 / 1458 / 1420. This is a tuning sample, not a guaranteed ranking against humans or on unseen courses. Tests cover Easy taking an exact finish and defending it, automatic shared transitions, human privacy gates, final-stop behavior and memory clearing on reshuffle. All-CPU 18-hole simulations now use the actual automatic-flow helper.
+
+Reproduce calibration with `node scripts/benchmark-cpus.mjs`. The browser confirmed all four automatic golfer names while retaining difficulty labels, and Pause/Resume autoplay during a four-CPU round. No console errors observed.
+
+The four-CPU browser round reached its final score automatically after resume, without any planning, reveal, reaction, result or scorecard clicks.

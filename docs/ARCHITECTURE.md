@@ -88,9 +88,9 @@ flowchart LR
   Engine --> State
 ```
 
-Easy picks a random legal shot and usually passes reactions. Normal minimizes immediate landing cost and protects its own shot. Hard adds one-shot lookahead using retained cards, estimates opponents’ likely shots and evaluates cancellation chains. Expert excludes only its own hand from the catalogue when estimating opponents’ options, and spends Mulligans on smaller worthwhile improvements. These are bounded heuristics, not guaranteed win rates or an online AI service. Preparation specials (Dig, Borrow, Read) are currently used only as club faces by CPUs; CPUs exchange an unplayable hand for the same one-stroke practice swing as humans.
+Easy evaluates legal shots and useful defensive Mulligans. Normal minimizes immediate landing cost and protects its own shot. Hard adds one-shot lookahead using retained cards, estimates opponents’ likely shots and evaluates cancellation chains. Expert excludes its own hand and remembered publicly revealed cards from the catalogue when estimating opponents’ options, and spends Mulligans on smaller worthwhile improvements. These are bounded heuristics, not guaranteed win rates or an online AI service. Preparation specials (Dig, Borrow, Read) are currently used only as club faces by CPUs; CPUs exchange an unplayable hand for the same one-stroke practice swing as humans.
 
-CPU timers run only on their private turns, never display their hands, stop when hidden or leaving play, and resume when visible. Shared reveal, results and scorecards always wait for a human Continue action, including all-CPU spectator rounds. Work is bounded by eight cards and four targets, with cached opponent estimates per action/target; no background simulation, API or worker is needed.
+CPU timers run only on their private turns, never display their hands, stop when hidden or leaving play, and resume when visible. Games with CPUs automatically advance shared reveal, results and scorecards, stopping at human private turns or the final result. Pause autoplay allows review. Work is bounded by eight cards and four targets, with cached opponent estimates per action/target; no background simulation, API or worker is needed.
 
 The optional `controller` field is backward compatible: absent means human, preserving existing v1 saves. Current saves store one of human/easy/normal/hard/expert. The deck lifecycle changes at the next hole without discarding the current save. `course-view.js` computes a common proportional scale including positions beyond the pin and behind the tee.
 
@@ -119,3 +119,13 @@ flowchart LR
 Result strings are generated from the final cancellation graph before locked plans clear. A live original action whose cancelling Mulligan was cancelled gets a restored annotation. A cancelled original gets a cancelled annotation, never a misleading restored label. Putt/practice immunity remains explicit.
 
 CPU selector changes patch only dependent name fields and helper text. The native select DOM node remains mounted and receives no programmatic refocus.
+
+## CPU tuning and automatic flow (23 September 2026)
+
+New game names: Easy = Bobby Fairways; Normal (the requested Medium tier) = Grant Horvat; Hard = Bryson Dechambeau; Expert = Tiger Woods. Dropdown labels stay unchanged. Repeated names get numeric suffixes; human-name collisions are avoided. Existing saves retain names.
+
+Relative design targets are 6/7/9/10, not externally calibrated ratings. Easy no longer plays random shots or randomly declines protection: all levels evaluate legal combinations and prioritize exact finishes. Normal adds limited planning and tactical targets; Hard weighs sabotage and reactions more strongly; Expert also evaluates next-shot club/action combinations and remembers public card sightings. CPU preparation specials remain club-only, as before.
+
+`publicPlayed` contains only club/action cards from resolved, publicly revealed plans. No private discards, opponent hands or draw order enter this memory. It is cleared on discard recycling, conservatively forgetting prior sightings when cards may re-enter play. Old saves start with empty memory. The discard pile remains uninspectable. No API, paid AI or background training is used.
+
+`flow.js` returns automatic transitions for shared reveal, results and hole scorecards whenever CPUs are involved. CPU turns run consecutively; human private planning/reactions, including undo, never auto-confirm. Human privacy handoffs remain explicit. Results/scorecards stay visible briefly (1.8 seconds); Pause autoplay stops advancement and CPU activity until resumed. Hidden tabs and Save & leave cancel timers. All-human games retain manual flow; all-CPU games can finish without clicks, stopping at final results.

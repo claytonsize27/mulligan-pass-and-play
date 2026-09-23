@@ -4,6 +4,37 @@ import { createGame, transition, assertGame, COURSE, activePlayer } from "../src
 import { cpuObservation, chooseCpuMove, LEVELS } from "../src/cpu.js";
 import { courseScale } from "../src/course-view.js";
 import { loadGame, SAVE_KEY } from "../src/storage.js";
+import { automaticEvent } from "../src/flow.js";
+import { CARD_BY_ID } from "../src/cards.js";
+
+test("Easy takes a guaranteed hole-out and defends against a damaging action", () => {
+  let s = createGame(["A", "B"], [{yards:150,par:3}], 22);
+  s.phase = "plan";
+  const ids = Object.keys(CARD_BY_ID);
+  const iron = ids.find(id => CARD_BY_ID[id].club === "iron");
+  const fairway = ids.find(id => CARD_BY_ID[id].action === "fairway" && id !== iron);
+  s.players[0].hand = [iron, fairway];
+  const event = chooseCpuMove(cpuObservation(s), "easy");
+  assert.equal(event.club, iron);
+  assert.equal(event.action, fairway);
+  const mulligan = ids.find(id => CARD_BY_ID[id].action === "mulligan");
+  const rough = ids.find(id => CARD_BY_ID[id].action === "rough");
+  s.players[0].hand = [mulligan]; s.phase = "reaction";
+  s.plans = {0:{club:iron,action:fairway,target:0},1:{club:iron,action:rough,target:0}};
+  assert.equal(chooseCpuMove(cpuObservation(s), "easy").type, "CANCEL");
+});
+
+test("CPU flow skips shared clicks and stops at human privacy gates and final results", () => {
+  const s = createGame(["A", "B"], undefined, 22, ["human", "expert"]);
+  assert.equal(automaticEvent(s), null);
+  for (const [phase,type] of Object.entries({reveal:"REACTIONS",results:"CONTINUE",score:"NEXT_HOLE"})) {
+    s.phase = phase; assert.deepEqual(automaticEvent(s), {type});
+  }
+  s.phase = "finished"; assert.equal(automaticEvent(s), null);
+  s.phase = "plan"; assert.equal(automaticEvent(s), null);
+  s.players[1].controller = "human"; s.phase = "reveal";
+  assert.equal(automaticEvent(s), null);
+});
 
 test("course scale preserves proportional overshoots and positions behind tee", () => {
   const scale = courseScale(280, [-25, 280, 350, 400]);
@@ -46,8 +77,8 @@ test("all four CPU levels complete finite 2–4 player 18-hole games; holes reta
     while (s.phase !== "finished") {
       assert.ok(++moves < 8000, `${level}/${n} stuck`);
       const before = structuredClone(s);
-      const type = { reveal: "REACTIONS", results: "CONTINUE", score: "NEXT_HOLE" }[s.phase];
-      const event = type ? {type} : chooseCpuMove(cpuObservation(s), activePlayer(s).controller, () => .47);
+      const auto = automaticEvent(s);
+      const event = auto || chooseCpuMove(cpuObservation(s), activePlayer(s).controller, () => .47);
       s = transition(s, event);
       assertGame(s);
       if (s.hole !== before.hole) {

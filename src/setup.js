@@ -1,4 +1,4 @@
-import { LEVELS } from "./cpu.js";
+export const CPU_NAMES = { easy: "Bobby Fairways", normal: "Grant Horvat", hard: "Bryson Dechambeau", expert: "Tiger Woods" };
 
 // House course ranges, within USGA par guidelines; five-yard steps suit the cards.
 export const YARD_RANGES = { 3: [125, 225], 4: [275, 450], 5: [475, 600] };
@@ -28,7 +28,7 @@ export function playerNames(names, controllers) {
   const used = new Set(result.filter((_, i) => controllers[i] === "human").map(n => n.toLowerCase()));
   controllers.forEach((controller, i) => {
     if (controller === "human") return;
-    const base = `CPU - ${LEVELS[controller]}`;
+    const base = CPU_NAMES[controller];
     let name = base, suffix = 2;
     while (used.has(name.toLowerCase())) name = `${base} ${suffix++}`;
     result[i] = name;

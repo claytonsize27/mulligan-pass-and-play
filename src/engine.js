@@ -35,6 +35,7 @@ function draw(s, p, n) {
       s.deck = shuffle(s, s.discard);
       s.discard = [];
       s.reshuffles++;
+      s.publicPlayed = []; // Forget old sightings when those cards can re-enter play.
     }
     if (s.deck.length) p.hand.push(s.deck.pop());
   }
@@ -236,6 +237,7 @@ function resolve(s) {
       effects,
     });
   }
+  s.publicPlayed = [...new Set([...(s.publicPlayed || []), ...Object.values(s.plans).flatMap(plan => [plan.club, plan.action].filter(Boolean))])];
   for (const plan of Object.values(s.plans)) {
     if (plan.club) s.discard.push(plan.club);
     if (plan.action) s.discard.push(plan.action);
@@ -428,6 +430,7 @@ export function transition(state, event) {
   return s;
 }
 export function assertGame(s) {
+  insist(s.publicPlayed === undefined || (Array.isArray(s.publicPlayed) && s.publicPlayed.length <= 104 && new Set(s.publicPlayed).size === s.publicPlayed.length && s.publicPlayed.every(id => CARD_BY_ID[id])), "Invalid public card memory.");
   insist(s?.version === VERSION, "This save uses an unsupported version.");
   insist(
     Array.isArray(s.players) && s.players.length >= 2 && s.players.length <= 4,

@@ -45,7 +45,7 @@ Deployment status is recorded in `docs/DEPLOYMENT.md`; this README does not impl
 
 ## Player options and deck continuity
 
-Human names start empty; leave one blank to use Player N. CPU names are assigned automatically from difficulty (for example CPU - Normal), with numbered suffixes for duplicates. Each seat independently offers Human or CPU (Easy, Normal, Hard, Expert). All-CPU spectator rounds are supported. CPUs share the same finite deck and legal moves; no private opponent cards or draw order enter their decisions. Discard identities are hidden from humans and all CPU levels; Expert estimates opponents from the catalogue and its own hand only.
+Human names start empty; leave one blank to use Player N. CPU names are assigned automatically (Bobby Fairways, Grant Horvat, Bryson Dechambeau and Tiger Woods), with numbered suffixes for duplicates. Each seat independently offers Human or CPU (Easy, Normal, Hard, Expert). All-CPU spectator rounds are supported. CPUs share the same finite deck and legal moves; no private opponent cards or draw order enter their decisions. Discard identities are hidden from humans and all CPU levels; Expert estimates opponents from the catalogue, its own hand and remembered publicly revealed cards.
 
 Keep your hand between holes. Played cards are replaced up to eight; only an exhausted draw pile triggers a shuffle of currently discarded cards. Overshoots appear beyond the course flag with their distance, and shared reveals include action-effect descriptions.
 

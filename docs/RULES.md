@@ -74,3 +74,13 @@ A new 1-hole round chooses par 3, 4 or 5. Three holes have one of each, shuffled
 Each hole gets a random distance in five-yard steps: par 3 uses 125–225 yards, par 4 uses 275–450, and par 5 uses 475–600. These house ranges are within the [USGA par guidelines](https://www.usga.org/content/usga/home-page/handicapping/roh/Content/rules/Appendix%20F%20Establishing%20Par.htm); they are not an official course rating. Custom scorecards retain the existing 1–18 holes, 50–650 yard and par 3–6 validation.
 
 Generation runs once when a new game is submitted. The resulting scorecard is saved with the game, so resume and reload never reroll holes. Existing saved rounds keep their course. `src/setup.js` owns generation and collision-safe CPU naming; its injectable random function supports repeatable tests without exposing the deck seed.
+
+## CPU tuning and automatic flow (23 September 2026)
+
+New game names: Easy = Bobby Fairways; Normal (the requested Medium tier) = Grant Horvat; Hard = Bryson Dechambeau; Expert = Tiger Woods. Dropdown labels stay unchanged. Repeated names get numeric suffixes; human-name collisions are avoided. Existing saves retain names.
+
+Relative design targets are 6/7/9/10, not externally calibrated ratings. Easy no longer plays random shots or randomly declines protection: all levels evaluate legal combinations and prioritize exact finishes. Normal adds limited planning and tactical targets; Hard weighs sabotage and reactions more strongly; Expert also evaluates next-shot club/action combinations and remembers public card sightings. CPU preparation specials remain club-only, as before.
+
+`publicPlayed` contains only club/action cards from resolved, publicly revealed plans. No private discards, opponent hands or draw order enter this memory. It is cleared on discard recycling, conservatively forgetting prior sightings when cards may re-enter play. Old saves start with empty memory. The discard pile remains uninspectable. No API, paid AI or background training is used.
+
+`flow.js` returns automatic transitions for shared reveal, results and hole scorecards whenever CPUs are involved. CPU turns run consecutively; human private planning/reactions, including undo, never auto-confirm. Human privacy handoffs remain explicit. Results/scorecards stay visible briefly (1.8 seconds); Pause autoplay stops advancement and CPU activity until resumed. Hidden tabs and Save & leave cancel timers. All-human games retain manual flow; all-CPU games can finish without clicks, stopping at final results.
