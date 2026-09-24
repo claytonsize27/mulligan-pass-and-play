@@ -220,7 +220,7 @@ function score() {
     totals = game.players.map((p) => p.scores.reduce((a, b) => a + b, 0)),
     low = Math.min(...totals),
     winners = game.players.filter((_, i) => totals[i] === low);
-  return `${top()}<section class="shared scorecard">${finished ? flag : ""}<h2>${finished ? `${winners.map((p) => esc(p.name)).join(" & ")} ${winners.length > 1 ? "share the win." : "takes the round."}` : "Hole complete."}</h2><p>${finished ? "The scores are in. There’s always another round." : "Mark the card, then head to the next tee."}</p><div class="table-scroll"><table><caption>Scorecard · strokes per hole</caption><thead><tr><th scope="col">Hole</th><th scope="col">Par</th>${game.players.map((p) => `<th scope="col">${badge(p)}${esc(p.name)}</th>`).join("")}</tr></thead><tbody>${game.course
+  return `${top()}<section class="shared scorecard">${finished ? flag : ""}<h2>${finished ? `${winners.map((p) => esc(p.name)).join(" & ")} ${winners.length > 1 ? "share the win." : "takes the round."}` : "Hole complete."}</h2><p>${finished ? "The scores are in. There’s always another round." : "Mark the card, then head to the next tee."}</p><ul class="score-players" aria-label="Scorecard players">${game.players.map(p => `<li>${badge(p)}<span>${esc(p.name)}</span></li>`).join("")}</ul><div class="table-scroll" role="region" aria-label="Hole scores" tabindex="0"><table><caption>Scorecard · strokes per hole</caption><thead><tr><th scope="col">Hole</th><th scope="col">Par</th>${game.players.map((p) => `<th scope="col"><span aria-hidden="true">${badge(p)}</span><span class="sr-only">${esc(p.name)}</span></th>`).join("")}</tr></thead><tbody>${game.course
     .slice(0, game.players[0].scores.length)
     .map(
       (h, i) =>

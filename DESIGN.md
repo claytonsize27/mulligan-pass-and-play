@@ -79,3 +79,5 @@ CPU games include Pause/Resume autoplay beside Save & leave. Shared shot screens
 Reaction course previews pair current numbered balls with separate outlined P markers and explicit projected yardages/strokes. Both use one proportional scale; the P markers sit below the track to avoid obscuring the current ball.
 
 Reaction course previews start collapsed for each reaction turn. The summary shows the reacting player's projected yardage/status and total strokes; View course expands the existing full preview. Expansion persists through Mulligan and undo changes within that turn.
+
+Scorecards use a full-width player-name key and matching numbered column badges. Hole, Par, Total, and scores stay on one line; accessible column headers retain full names. Horizontal overflow stays within the scorecard on unusually narrow screens.

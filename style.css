@@ -1299,9 +1299,33 @@ dialog summary {
 .result-row > div > strong {
   flex-shrink: 0;
 }
-.scorecard th {
-  overflow-wrap: anywhere;
-  max-width: 160px;
+.scorecard th,
+.scorecard td {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.scorecard thead .player-dot {
+  margin: 0 auto;
+}
+.score-players {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0 8px;
+}
+.score-players li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+.score-players li > span:last-child {
+  white-space: nowrap;
+  overflow-x: auto;
+  min-width: 0;
+}
+.scorecard .table-scroll:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
 }
 @media (max-width: 760px) {
   .revealed-row {
