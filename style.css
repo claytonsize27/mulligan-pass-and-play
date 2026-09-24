@@ -168,6 +168,10 @@ small,
   padding: 40px 32px 60px;
   outline: none;
 }
+/* The home heading receives focus for screen-reader orientation, not input. */
+.setup h1[tabindex="-1"]:focus {
+  outline: none;
+}
 .setup {
   display: grid;
   grid-template-columns: 1fr 1fr;
