@@ -1346,3 +1346,5 @@ input::placeholder { color: #52675e; opacity: 1; }
 .shot-preview .yard-track { margin-bottom: 34px; }
 .projected-ball { position: absolute; top: 12px; transform: translateX(-50%); border: 2px solid #e8c784; color: #e8c784; background: var(--field); border-radius: 50%; width: 22px; height: 22px; text-align: center; font-size: 12px; font-weight: 700; line-height: 18px; }
 .projection-label { font-size: .875rem; color: #e8c784; margin: 8px 0 0; }
+
+.scorecard .current-hole { background: #e5e8dc; }

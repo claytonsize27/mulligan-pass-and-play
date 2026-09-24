@@ -68,3 +68,5 @@ Reaction screens show both the current numbered ball and a separate P marker for
 `previewShots` runs the same `resolveShots` calculation used by real resolution on a cloned state, only after public reveal. It does not refill hands, consume cards, change the live PRNG, write scores or save state. Only the real resolver performs those operations. The tee order is optional backward-compatible save metadata.
 
 - Reaction course preview defaults collapsed each turn, summarizing the active player's projected yardage and total strokes. View course expands it; Mulligan, counter-Mulligan, and undo update both summary and full preview while preserving the current expansion choice.
+
+- Planning and reaction screens offer a collapsed View scorecard bar. It reuses the hole-completion scorecard, adds the current hole's recorded strokes (including penalties), and includes those strokes in totals. Pending shots and reaction projections are excluded. Expansion is preserved within the same turn.

@@ -170,7 +170,7 @@ function specials(p) {
 }
 function planning() {
   const p = activePlayer(game);
-  return `${top()}<details class="planning-board"><summary>${fmt(remaining(game, p))} yd to the hole · ${p.strokes} strokes <span>View course</span></summary>${board()}</details><section class="private-area"><div class="section-heading"><h2>${badge(p)}${esc(p.name)}’s shot</h2>${button("Cover hand", "cover", "quiet")}</div><p class="instruction">Pick a club, an action on a different card, and a target.</p>${peek ? `<div class="special-panel"><strong>${esc(peek.name)}’s locked shot</strong><p>${esc(peek.text)}</p></div>` : ""}${specials(p)}<div class="shot-slots"><div><span>Club</span><strong>${selected.club ? CLUBS[CARD_BY_ID[selected.club].club].name : "Choose below"}</strong></div><div><span>Action</span><strong>${selected.action ? ACTIONS[CARD_BY_ID[selected.action].action].name : "Choose below"}</strong></div></div><fieldset class="targets"><legend>Who gets your action?</legend>${game.order.map((i) => `<button data-do="target" data-target="${i}" aria-pressed="${selected.target === i}" class="target">${badge(game.players[i])}${i === p.id ? "Me" : esc(game.players[i].name)}</button>`).join("")}</fieldset><div class="hand-heading"><h3>Your hand <span>${p.hand.length} cards</span></h3><span>${game.deck.length} in deck · ${game.discard.length} discarded</span></div><div class="hand">${p.hand.map((id) => card(id, p)).join("")}</div><div class="commit-bar"><div><strong>${selected.club && selected.action && selected.target !== null ? "Your shot is ready." : "Build your shot above."}</strong><small>Cards stay hidden until everyone is ready.</small></div>${button("Lock shot & pass", "commit", "primary", !selected.club || !selected.action || selected.target === null ? "disabled" : "")}</div><details class="recovery"><summary>Need a different hand?</summary><p>Take a practice swing: spend one stroke to exchange your whole hand. No shot or action this turn.</p>${button("Exchange hand · +1 stroke", "rest", "secondary")}</details></section>`;
+  return `${top()}<details class="planning-board"><summary>${fmt(remaining(game, p))} yd to the hole · ${p.strokes} strokes <span>View course</span></summary>${board()}</details>${liveScorecard()}<section class="private-area"><div class="section-heading"><h2>${badge(p)}${esc(p.name)}’s shot</h2>${button("Cover hand", "cover", "quiet")}</div><p class="instruction">Pick a club, an action on a different card, and a target.</p>${peek ? `<div class="special-panel"><strong>${esc(peek.name)}’s locked shot</strong><p>${esc(peek.text)}</p></div>` : ""}${specials(p)}<div class="shot-slots"><div><span>Club</span><strong>${selected.club ? CLUBS[CARD_BY_ID[selected.club].club].name : "Choose below"}</strong></div><div><span>Action</span><strong>${selected.action ? ACTIONS[CARD_BY_ID[selected.action].action].name : "Choose below"}</strong></div></div><fieldset class="targets"><legend>Who gets your action?</legend>${game.order.map((i) => `<button data-do="target" data-target="${i}" aria-pressed="${selected.target === i}" class="target">${badge(game.players[i])}${i === p.id ? "Me" : esc(game.players[i].name)}</button>`).join("")}</fieldset><div class="hand-heading"><h3>Your hand <span>${p.hand.length} cards</span></h3><span>${game.deck.length} in deck · ${game.discard.length} discarded</span></div><div class="hand">${p.hand.map((id) => card(id, p)).join("")}</div><div class="commit-bar"><div><strong>${selected.club && selected.action && selected.target !== null ? "Your shot is ready." : "Build your shot above."}</strong><small>Cards stay hidden until everyone is ready.</small></div>${button("Lock shot & pass", "commit", "primary", !selected.club || !selected.action || selected.target === null ? "disabled" : "")}</div><details class="recovery"><summary>Need a different hand?</summary><p>Take a practice swing: spend one stroke to exchange your whole hand. No shot or action this turn.</p>${button("Exchange hand · +1 stroke", "rest", "secondary")}</details></section>`;
 }
 function borrowView() {
   const p = activePlayer(game),
@@ -187,7 +187,7 @@ function reaction() {
   const projected = previewShots(game), next = projected.players[p.id];
   const yardage = next.done ? (next.pickedUp ? "Picked up" : "Holed") : `${fmt(remaining(game, next))} yd ${next.position > game.course[game.hole].yards ? "past hole" : "to the hole"}`;
   const coursePreview = `<details class="planning-board reaction-board" data-reaction="${game.hole}-${game.round}-${p.id}"><summary><strong>After shot: ${yardage} · ${next.strokes} ${next.strokes === 1 ? "stroke" : "strokes"}</strong><span>View course</span></summary>${board(true, projected)}<p class="fine">Preview uses the current actions and Mulligans. Later reactions can change it.</p></details>`;
-  return `${top()}<section class="private-area"><div class="section-heading"><h2>${badge(p)}${esc(p.name)}’s reaction</h2>${button("Cover hand", "cover", "quiet")}</div>${coursePreview}${plans()}<h3>${cards.length ? `${cards.length} Mulligan ${cards.length === 1 ? "available" : "cards available"}` : "No Mulligan in your hand"}</h3><p>${cards.length ? "Cancel an action, or cancel an earlier Mulligan to restore its effect." : "You can pass. Your shot will resolve with the group."}</p>${
+  return `${top()}<section class="private-area"><div class="section-heading"><h2>${badge(p)}${esc(p.name)}’s reaction</h2>${button("Cover hand", "cover", "quiet")}</div>${coursePreview}${liveScorecard()}${plans()}<h3>${cards.length ? `${cards.length} Mulligan ${cards.length === 1 ? "available" : "cards available"}` : "No Mulligan in your hand"}</h3><p>${cards.length ? "Cancel an action, or cancel an earlier Mulligan to restore its effect." : "You can pass. Your shot will resolve with the group."}</p>${
     cards.length
       ? `<div class="cancel-options">${game.order
           .filter((i) => game.plans[i].action && !cancelled.has("a" + i))
@@ -215,20 +215,28 @@ function results() {
       "",
     )}</div>${button(game.players.every((p) => p.done) ? "View hole scorecard" : "Plan the next shot", "continue")}</section>${board()}`;
 }
+function scoreTable(current = false) {
+  const holeCount = current ? game.hole + 1 : game.players[0].scores.length;
+  const totals = game.players.map(p => p.scores.slice(0, current ? game.hole : holeCount).reduce((a, b) => a + b, 0) + (current ? p.strokes : 0));
+  return `<ul class="score-players" aria-label="Scorecard players">${game.players.map(p => `<li>${badge(p)}<span>${esc(p.name)}</span></li>`).join("")}</ul><div class="table-scroll" role="region" aria-label="Hole scores" tabindex="0"><table><caption>Scorecard · strokes per hole</caption><thead><tr><th scope="col">Hole</th><th scope="col">Par</th>${game.players.map((p) => `<th scope="col"><span aria-hidden="true">${badge(p)}</span><span class="sr-only">${esc(p.name)}</span></th>`).join("")}</tr></thead><tbody>${game.course
+    .slice(0, holeCount)
+    .map(
+      (h, i) =>
+        `<tr class="${current && i === game.hole ? "current-hole" : ""}"><th scope="row">${i + 1}${current && i === game.hole ? '<span class="sr-only"> (in progress)</span>' : ""}</th><td>${h.par}</td>${game.players.map((p) => `<td>${current && i === game.hole ? p.strokes : p.scores[i]}</td>`).join("")}</tr>`,
+    )
+    .join(
+      "",
+    )}</tbody><tfoot><tr><th scope="row">Total</th><td>${game.course.slice(0, holeCount).reduce((n, h) => n + h.par, 0)}</td>${totals.map((t) => `<td>${t}</td>`).join("")}</tr></tfoot></table></div>${current ? '<p class="fine">Highlighted hole is in progress. Recorded strokes only, including penalties; pending shots and Mulligans are not included.</p>' : ""}`;
+}
+function liveScorecard() {
+  return `<details class="planning-board scorecard live-scorecard" data-score-turn="${game.hole}-${game.round}-${game.phase}-${activePlayer(game).id}"><summary>View scorecard</summary>${scoreTable(true)}</details>`;
+}
 function score() {
   const finished = game.phase === "finished",
     totals = game.players.map((p) => p.scores.reduce((a, b) => a + b, 0)),
     low = Math.min(...totals),
     winners = game.players.filter((_, i) => totals[i] === low);
-  return `${top()}<section class="shared scorecard">${finished ? flag : ""}<h2>${finished ? `${winners.map((p) => esc(p.name)).join(" & ")} ${winners.length > 1 ? "share the win." : "takes the round."}` : "Hole complete."}</h2><p>${finished ? "The scores are in. There’s always another round." : "Mark the card, then head to the next tee."}</p><ul class="score-players" aria-label="Scorecard players">${game.players.map(p => `<li>${badge(p)}<span>${esc(p.name)}</span></li>`).join("")}</ul><div class="table-scroll" role="region" aria-label="Hole scores" tabindex="0"><table><caption>Scorecard · strokes per hole</caption><thead><tr><th scope="col">Hole</th><th scope="col">Par</th>${game.players.map((p) => `<th scope="col"><span aria-hidden="true">${badge(p)}</span><span class="sr-only">${esc(p.name)}</span></th>`).join("")}</tr></thead><tbody>${game.course
-    .slice(0, game.players[0].scores.length)
-    .map(
-      (h, i) =>
-        `<tr><th scope="row">${i + 1}</th><td>${h.par}</td>${game.players.map((p) => `<td>${p.scores[i]}</td>`).join("")}</tr>`,
-    )
-    .join(
-      "",
-    )}</tbody><tfoot><tr><th scope="row">Total</th><td>${game.course.slice(0, game.players[0].scores.length).reduce((n, h) => n + h.par, 0)}</td>${totals.map((t) => `<td>${t}</td>`).join("")}</tr></tfoot></table></div>${finished ? button("Play another round", "home") : button(game.hole === game.course.length - 1 ? "See final results" : "Next hole", "next-hole")}</section>`;
+  return `${top()}<section class="shared scorecard">${finished ? flag : ""}<h2>${finished ? `${winners.map((p) => esc(p.name)).join(" & ")} ${winners.length > 1 ? "share the win." : "takes the round."}` : "Hole complete."}</h2><p>${finished ? "The scores are in. There’s always another round." : "Mark the card, then head to the next tee."}</p>${scoreTable()}${finished ? button("Play another round", "home") : button(game.hole === game.course.length - 1 ? "See final results" : "Next hole", "next-hole")}</section>`;
 }
 let renderedPhase = "";
 function render() {
@@ -237,6 +245,7 @@ function render() {
   const focused = document.activeElement;
   const key = focused?.closest("[data-do]")?.dataset;
   const focusName = focused?.getAttribute("name");
+  const previousScorecard = app.querySelector(".live-scorecard");
   const previousPreview = app.querySelector(".reaction-board");
   app.innerHTML =
     screen === "home"
@@ -256,6 +265,8 @@ function render() {
                 : game.phase === "results"
                   ? results()
                   : score();
+  const currentScorecard = app.querySelector(".live-scorecard");
+  if (currentScorecard && previousScorecard?.dataset.scoreTurn === currentScorecard.dataset.scoreTurn) currentScorecard.open = previousScorecard.open;
   const currentPreview = app.querySelector(".reaction-board");
   if (currentPreview && previousPreview?.dataset.reaction === currentPreview.dataset.reaction) currentPreview.open = previousPreview.open;
   const auto = screen === "game" ? automaticEvent(game, !autoplayPaused) : null;
