@@ -55,3 +55,7 @@ The four-CPU browser round reached its final score automatically after resume, w
 Autoplay correction: all 28 tests pass. Flow tests cover multiple humans with only one finished, all humans finished, autoplay disabled, all-CPU play, human private phases, final results and manual Hole Complete. Full-round simulations and the calibration script explicitly acknowledge Hole Complete as a user action.
 
 Browser regression: with autoplay paused, both CPUs completed planning and reached All Cards on the Table. After manually starting reactions, both CPUs completed reactions and reached Swing Together while autoplay remained paused. No console errors were observed.
+
+Golf order and preview update: 31 tests pass. Coverage includes previous-hole honours, stable ties, absolute overshoot distance, finished-player exclusion and matching reaction order. Preview purity and equality with real results are tested, including Mulligan/undo, stacked modifiers, putting immunity, overshoot and penalties. Prior CPU calibration totals predate this turn-order change.
+
+Browser verification at 390px: the reaction board showed current balls at the tee and distinct projected markers. Cancelling Rough changed Player 1 from 240 yards remaining to 190; undo restored 240. The current position stayed unchanged. Mobile layout was inspected and the projected stroke label was corrected for singular/plural.

@@ -8,6 +8,7 @@ import {
   legalClub,
   remaining,
   liveEffects,
+  previewShots,
 } from "../src/engine.js";
 import { CARDS, CARD_BY_ID, ACTIONS } from "../src/cards.js";
 import { loadGame, saveGame, SAVE_KEY } from "../src/storage.js";
@@ -366,4 +367,60 @@ test("simulation: complete 2–4 player, 18-hole games without deadlock or card 
       assert.equal(s.phase, "finished");
       for (const p of s.players) assert.equal(p.scores.length, 18);
     }
+});
+
+
+test("tee honours use previous-hole scores with stable ties; later shots are farthest first", () => {
+  let s = createGame(["A", "B", "C", "D"], [{yards:280,par:4},{yards:350,par:4},{yards:150,par:3}], 43);
+  assert.deepEqual(s.order, [0,1,2,3]);
+  s.phase = "score";
+  [5,3,4,3].forEach((score,i) => {s.players[i].scores=[score];s.players[i].done=true;});
+  s = move(s, {type:"NEXT_HOLE"});
+  assert.deepEqual(s.order, [1,3,2,0]);
+  s.phase = "results";
+  [300,450,250,350].forEach((position,i) => s.players[i].position=position);
+  s.players[3].done=true;
+  s = move(s, {type:"CONTINUE"});
+  // 1 overshot by 100; 2 is short by 100; 0 is short by 50. Ties retain order.
+  assert.deepEqual(s.order, [1,2,0]);
+  s.phase = "reveal";
+  s = move(s, {type:"REACTIONS"});
+  assert.deepEqual(s.order, [1,2,0]);
+  s.phase = "score";
+  s.players.forEach(p => {p.done=true;p.scores.push(4);});
+  s = move(s, {type:"NEXT_HOLE"});
+  assert.deepEqual(s.order, [1,3,2,0]);
+});
+
+test("shot preview is pure, matches resolution, and updates on Mulligan and undo", () => {
+  let s = setupShot(["hybrid", "hybrid"], ["rough", "sand"], [0, 0]);
+  const card = give(s, 0, c => c.action === "mulligan");
+  const before = structuredClone(s);
+  const initial = previewShots(s);
+  assert.deepEqual(s, before);
+  assert.equal(initial.players[0].position, 75);
+  s = move(move(s, {type:"REACTIONS"}), {type:"OPEN"});
+  s = move(s, {type:"CANCEL", card, target:"a0"});
+  assert.equal(previewShots(s).players[0].position, 100);
+  s = move(s, {type:"UNDO_CANCEL"});
+  assert.deepEqual(previewShots(s), initial);
+  const predicted = previewShots(s);
+  while (s.phase !== "results") s = move(s, {type:s.phase === "handoff" ? "OPEN" : "PASS"});
+  assert.deepEqual(s.results, predicted.results);
+  for (const p of s.players) for (const key of ["position","strokes","shots","done","pickedUp"])
+    assert.equal(p[key], predicted.players[p.id][key]);
+  assert.throws(() => previewShots(newGame()));
+});
+
+test("preview includes overshoots, putt immunity and penalty strokes", () => {
+  for (const s of [
+    setupShot(["driver","hybrid"],["fairway","bounds"],[0,0]),
+    setupShot(["putt","hybrid"],["fairway","bounds"],[0,0],[260,0]),
+  ]) {
+    const preview = previewShots(s);
+    const actual = resolve(s);
+    assert.deepEqual(preview.results, actual.results);
+    assert.equal(preview.players[0].position, actual.players[0].position);
+    assert.equal(preview.players[0].strokes, actual.players[0].strokes);
+  }
 });

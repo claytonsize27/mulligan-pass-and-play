@@ -80,9 +80,17 @@ function startPlanning(s) {
   s.cancels = [];
   s.results = [];
   s.events = [];
-  s.order = s.players.map((_, i) => i).filter((i) => !s.players[i].done);
-  const rotate = (s.hole + s.round - 1) % s.order.length;
-  s.order.push(...s.order.splice(0, rotate));
+  const ids = s.players.map(p => p.id);
+  if (s.round === 1) {
+    s.order = [...(s.teeOrder || ids)];
+    if (s.hole > 0) s.order.sort((a, b) =>
+      s.players[a].scores[s.hole - 1] - s.players[b].scores[s.hole - 1]);
+    s.teeOrder = [...s.order]; // Stable ties retain previous tee honours.
+  } else {
+    s.order = [...new Set([...(s.order || []), ...ids])]
+      .filter(id => !s.players[id].done)
+      .sort((a, b) => remaining(s, s.players[b]) - remaining(s, s.players[a]));
+  }
   s.cursor = 0;
   s.stage = "plan";
   s.phase = "handoff";
@@ -162,7 +170,7 @@ export function liveEffects(s) {
     if (!cancelled.has(`x${i}`)) cancelled.add(s.cancels[i].target);
   return cancelled;
 }
-function resolve(s) {
+function resolveShots(s) {
   const cancelled = liveEffects(s);
   s.results = [];
   for (const id of s.order) {
@@ -237,6 +245,18 @@ function resolve(s) {
       effects,
     });
   }
+ }
+// The preview uses exactly the shot resolver, without spending/refilling cards,
+// changing scores, or touching the live state or shuffle generator.
+export function previewShots(state) {
+  insist(state.phase === "reveal" || state.phase === "reaction" ||
+    (state.phase === "handoff" && state.stage === "reaction"), "Reveal all shots before previewing.");
+  const projected = structuredClone(state);
+  resolveShots(projected);
+  return {players: projected.players, results: projected.results};
+}
+function resolve(s) {
+  resolveShots(s);
   s.publicPlayed = [...new Set([...(s.publicPlayed || []), ...Object.values(s.plans).flatMap(plan => [plan.club, plan.action].filter(Boolean))])];
   for (const plan of Object.values(s.plans)) {
     if (plan.club) s.discard.push(plan.club);
@@ -430,6 +450,7 @@ export function transition(state, event) {
   return s;
 }
 export function assertGame(s) {
+  insist(s.teeOrder === undefined || (Array.isArray(s.teeOrder) && s.teeOrder.length === s.players.length && new Set(s.teeOrder).size === s.players.length && s.teeOrder.every(id => Number.isInteger(id) && s.players[id])), "Invalid tee order.");
   insist(s.publicPlayed === undefined || (Array.isArray(s.publicPlayed) && s.publicPlayed.length <= 104 && new Set(s.publicPlayed).size === s.publicPlayed.length && s.publicPlayed.every(id => CARD_BY_ID[id])), "Invalid public card memory.");
   insist(s?.version === VERSION, "This save uses an unsupported version.");
   insist(

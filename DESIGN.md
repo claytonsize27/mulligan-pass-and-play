@@ -75,3 +75,5 @@ Each player seat groups a name input with a Human/CPU difficulty selector and a 
 Seat type changes preserve the native select element and focus; only dependent fields update. A visible Undo last Mulligan button and pending-choice explanation appear while the current reaction has reversible choices. Result annotations sit with their original actions.
 
 CPU games include Pause/Resume autoplay beside Save & leave. Shared shot screens advance only after all humans finish the hole; Hole Complete and human input remain manual. Pausing autoplay affects shared screens only. CPU names use the requested golfer names while dropdown labels remain unchanged.
+
+Reaction course previews pair current numbered balls with separate outlined P markers and explicit projected yardages/strokes. Both use one proportional scale; the P markers sit below the track to avoid obscuring the current ball.

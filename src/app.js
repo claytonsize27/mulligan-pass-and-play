@@ -10,6 +10,7 @@ import {
   remaining,
   legalClub,
   liveEffects,
+  previewShots,
 } from "./engine.js";
 import { loadGame, saveGame, SAVE_KEY } from "./storage.js";
 const app = document.querySelector("#app"),
@@ -86,14 +87,18 @@ function top() {
   const h = game.course[game.hole];
   return `<div class="game-top"><div><h1>Hole ${game.hole + 1}<span> / ${game.course.length}</span></h1><p>${esc(h.name || "Custom hole")} <span>·</span> ${h.yards} yd <span>·</span> Par ${h.par}</p></div><div class="button-row">${game.phase !== "finished" && game.players.some(p => LEVELS[p.controller]) ? button(autoplayPaused ? "Resume autoplay" : "Pause autoplay", "autoplay", "quiet") : ""}<button class="quiet" data-do="home">Save & leave</button></div></div>`;
 }
-function board() {
+function board(preview = false) {
   const h = game.course[game.hole];
-  const scale = courseScale(h.yards, game.players.map(p => p.position));
-  return `<section class="course-board" aria-label="Player positions"><div class="course-heading"><span>On the course</span><span>Shot ${game.round}</span></div>${game.players.map(p => {
+  const projected = preview ? previewShots(game) : null;
+  const scale = courseScale(h.yards, [...game.players.map(p => p.position), ...(projected?.players.map(p => p.position) || [])]);
+  return `<section class="course-board ${preview ? "shot-preview" : ""}" aria-label="${preview ? "Current and projected player positions" : "Player positions"}"><div class="course-heading"><span>${preview ? "On the course · shot preview" : "On the course"}</span><span>Shot ${game.round}</span></div>${game.players.map(p => {
     const ball = scale.at(p.position);
+    const next = projected?.players[p.id];
+    const result = projected?.results.find(r => r.id === p.id);
+    const forecast = next?.done ? (next.pickedUp ? "Picked up" : "Holed") : next ? `${fmt(Math.abs(h.yards - next.position))} yd ${next.position > h.yards ? "past hole" : "left"}` : "";
     const location = p.done ? (p.pickedUp ? "Picked up" : "Holed") : `${fmt(remaining(game, p))} yd ${p.position > h.yards ? "past hole" : p.position < 0 ? "to hole · behind tee" : "left"}`;
-    return `<div class="lane"><div class="lane-label">${badge(p)}<strong>${esc(p.name)}</strong><span>${location} · ${p.strokes} ${p.strokes === 1 ? "stroke" : "strokes"}</span></div><div class="yard-track"><span class="yard-fill p${p.id}" style="position:absolute;left:${Math.min(scale.tee,ball)}%;width:${Math.abs(ball-scale.tee)}%"></span><span class="pin" style="left:${scale.pin}%"></span><span class="ball p${p.id}" style="left:${ball}%">${p.id+1}</span></div></div>`;
-  }).join("")}<div class="course-axis"><span style="left:${scale.tee}%">Tee</span><span style="left:${scale.pin}%" class="hole-label">Hole</span></div><p class="course-distance">${h.yards} yards from tee to hole${scale.max > h.yards ? " · Track extends beyond the flag" : ""}</p></section>`;
+    return `<div class="lane"><div class="lane-label">${badge(p)}<strong>${esc(p.name)}</strong><span>${location} · ${p.strokes} ${p.strokes === 1 ? "stroke" : "strokes"}</span></div><div class="yard-track"><span class="yard-fill p${p.id}" style="position:absolute;left:${Math.min(scale.tee,ball)}%;width:${Math.abs(ball-scale.tee)}%"></span><span class="pin" style="left:${scale.pin}%"></span><span class="ball p${p.id}" style="left:${ball}%">${p.id+1}</span>${preview && result ? `<span class="projected-ball" style="left:${scale.at(next.position)}%" aria-hidden="true">P</span>` : ""}</div>${preview && result ? `<p class="projection-label">After shot: ${forecast} · ${next.strokes} ${next.strokes === 1 ? "stroke" : "strokes"}${result.penalty ? ` (+${result.penalty} penalty)` : ""}</p>` : ""}</div>`;
+  }).join("")}<div class="course-axis"><span style="left:${scale.tee}%">Tee</span><span style="left:${scale.pin}%" class="hole-label">Hole</span></div><p class="course-distance">${preview ? "Number = current ball; P = projected ball. " : ""}${h.yards} yards from tee to hole${scale.max > h.yards ? " · Track extends beyond the flag" : ""}</p></section>`;
 }
 function cpuView() {
   const p = activePlayer(game);
@@ -180,7 +185,7 @@ function reaction() {
   const p = activePlayer(game),
     cards = p.hand.filter((id) => CARD_BY_ID[id].action === "mulligan"),
     cancelled = liveEffects(game);
-  return `${top()}<section class="private-area"><div class="section-heading"><h2>${badge(p)}${esc(p.name)}’s reaction</h2>${button("Cover hand", "cover", "quiet")}</div>${plans()}<h3>${cards.length ? `${cards.length} Mulligan ${cards.length === 1 ? "available" : "cards available"}` : "No Mulligan in your hand"}</h3><p>${cards.length ? "Cancel an action, or cancel an earlier Mulligan to restore its effect." : "You can pass. Your shot will resolve with the group."}</p>${
+  return `${top()}<section class="private-area"><div class="section-heading"><h2>${badge(p)}${esc(p.name)}’s reaction</h2>${button("Cover hand", "cover", "quiet")}</div>${board(true)}<p class="fine">Preview uses the current actions and Mulligans. Later reactions can change it.</p>${plans()}<h3>${cards.length ? `${cards.length} Mulligan ${cards.length === 1 ? "available" : "cards available"}` : "No Mulligan in your hand"}</h3><p>${cards.length ? "Cancel an action, or cancel an earlier Mulligan to restore its effect." : "You can pass. Your shot will resolve with the group."}</p>${
     cards.length
       ? `<div class="cancel-options">${game.order
           .filter((i) => game.plans[i].action && !cancelled.has("a" + i))

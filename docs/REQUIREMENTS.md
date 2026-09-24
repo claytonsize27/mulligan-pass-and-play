@@ -16,7 +16,7 @@
 
 ## Chosen defaults
 
-Eight-card hands, three-hole quick round, rotating preparation order, conventional stroke-play scoring with shared ties. All players finish each hole. Exact landing or a 1-Putt within 25 yards finishes; overshoots play back toward the target. Twelve-shot cap prevents stalemates. These are disclosed house rules where evidence is incomplete.
+Eight-card hands, three-hole quick round, golf preparation order, conventional stroke-play scoring with shared ties. All players finish each hole. Exact landing or a 1-Putt within 25 yards finishes; overshoots play back toward the target. Twelve-shot cap prevents stalemates. These are disclosed house rules where evidence is incomplete.
 
 ## Deliberately outside this request
 
@@ -58,3 +58,11 @@ Relative design targets are 6/7/9/10, not externally calibrated ratings. Easy no
 ## Autoplay correction
 
 All Cards on the Table and Swing Together require manual clicks while any human has not finished the hole. Once all humans are done (including pickup at the shot limit), autoplay may skip those two screens. Hole Complete always requires Next Hole, or See final results on the final hole, even with no human seats. Turning autoplay off never suspends CPU decisions: private CPU planning and reaction phases remain scheduled automatically. Timers still stop when the page is hidden or the user leaves the game.
+
+## Golf order and live reaction projection
+
+First hole tee order is seat order (Player 1 first). Later tee shots sort by the immediately preceding hole's strokes, lowest first. Tied scores preserve previous tee order. After the first shot, unfinished players sort by absolute remaining distance, farthest first, including overshoots; equal distances preserve the preceding shot order. Reactions use the shot's same fixed order, even when previewed outcomes change. Existing in-progress turns retain their order until the next planning boundary; old saves without tee-order metadata fall back to seat order for ties.
+
+Reaction screens show both the current numbered ball and a separate P marker for the projected landing, on a shared scale that includes all current and projected positions. Per-player text shows projected remaining distance, total strokes, penalties and holed/picked-up status. Preview refreshes on every Mulligan and undo. It describes the current choices; later reactions may change them.
+
+`previewShots` runs the same `resolveShots` calculation used by real resolution on a cloned state, only after public reveal. It does not refill hands, consume cards, change the live PRNG, write scores or save state. Only the real resolver performs those operations. The tee order is optional backward-compatible save metadata.
