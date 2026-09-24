@@ -1,4 +1,4 @@
-const CACHE = "mulligan-house-v9";
+const CACHE = "mulligan-house-v10";
 const FILES = [
   "./",
   "./index.html",
