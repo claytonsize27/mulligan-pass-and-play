@@ -77,3 +77,5 @@ Seat type changes preserve the native select element and focus; only dependent f
 CPU games include Pause/Resume autoplay beside Save & leave. Shared shot screens advance only after all humans finish the hole; Hole Complete and human input remain manual. Pausing autoplay affects shared screens only. CPU names use the requested golfer names while dropdown labels remain unchanged.
 
 Reaction course previews pair current numbered balls with separate outlined P markers and explicit projected yardages/strokes. Both use one proportional scale; the P markers sit below the track to avoid obscuring the current ball.
+
+Reaction course previews start collapsed for each reaction turn. The summary shows the reacting player's projected yardage/status and total strokes; View course expands the existing full preview. Expansion persists through Mulligan and undo changes within that turn.

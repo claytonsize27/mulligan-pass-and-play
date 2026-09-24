@@ -1246,6 +1246,19 @@ dialog summary {
 .planning-board .course-board {
   margin-bottom: 20px;
 }
+.reaction-board > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.reaction-board > summary strong {
+  font-weight: inherit;
+}
+.reaction-board > summary span {
+  float: none;
+  flex-shrink: 0;
+}
 @media (max-width: 760px) {
   .club-face {
     min-height: 112px;

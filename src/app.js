@@ -87,9 +87,8 @@ function top() {
   const h = game.course[game.hole];
   return `<div class="game-top"><div><h1>Hole ${game.hole + 1}<span> / ${game.course.length}</span></h1><p>${esc(h.name || "Custom hole")} <span>·</span> ${h.yards} yd <span>·</span> Par ${h.par}</p></div><div class="button-row">${game.phase !== "finished" && game.players.some(p => LEVELS[p.controller]) ? button(autoplayPaused ? "Resume autoplay" : "Pause autoplay", "autoplay", "quiet") : ""}<button class="quiet" data-do="home">Save & leave</button></div></div>`;
 }
-function board(preview = false) {
+function board(preview = false, projected = preview ? previewShots(game) : null) {
   const h = game.course[game.hole];
-  const projected = preview ? previewShots(game) : null;
   const scale = courseScale(h.yards, [...game.players.map(p => p.position), ...(projected?.players.map(p => p.position) || [])]);
   return `<section class="course-board ${preview ? "shot-preview" : ""}" aria-label="${preview ? "Current and projected player positions" : "Player positions"}"><div class="course-heading"><span>${preview ? "On the course · shot preview" : "On the course"}</span><span>Shot ${game.round}</span></div>${game.players.map(p => {
     const ball = scale.at(p.position);
@@ -185,7 +184,10 @@ function reaction() {
   const p = activePlayer(game),
     cards = p.hand.filter((id) => CARD_BY_ID[id].action === "mulligan"),
     cancelled = liveEffects(game);
-  return `${top()}<section class="private-area"><div class="section-heading"><h2>${badge(p)}${esc(p.name)}’s reaction</h2>${button("Cover hand", "cover", "quiet")}</div>${board(true)}<p class="fine">Preview uses the current actions and Mulligans. Later reactions can change it.</p>${plans()}<h3>${cards.length ? `${cards.length} Mulligan ${cards.length === 1 ? "available" : "cards available"}` : "No Mulligan in your hand"}</h3><p>${cards.length ? "Cancel an action, or cancel an earlier Mulligan to restore its effect." : "You can pass. Your shot will resolve with the group."}</p>${
+  const projected = previewShots(game), next = projected.players[p.id];
+  const yardage = next.done ? (next.pickedUp ? "Picked up" : "Holed") : `${fmt(remaining(game, next))} yd ${next.position > game.course[game.hole].yards ? "past hole" : "to the hole"}`;
+  const coursePreview = `<details class="planning-board reaction-board" data-reaction="${game.hole}-${game.round}-${p.id}"><summary><strong>After shot: ${yardage} · ${next.strokes} ${next.strokes === 1 ? "stroke" : "strokes"}</strong><span>View course</span></summary>${board(true, projected)}<p class="fine">Preview uses the current actions and Mulligans. Later reactions can change it.</p></details>`;
+  return `${top()}<section class="private-area"><div class="section-heading"><h2>${badge(p)}${esc(p.name)}’s reaction</h2>${button("Cover hand", "cover", "quiet")}</div>${coursePreview}${plans()}<h3>${cards.length ? `${cards.length} Mulligan ${cards.length === 1 ? "available" : "cards available"}` : "No Mulligan in your hand"}</h3><p>${cards.length ? "Cancel an action, or cancel an earlier Mulligan to restore its effect." : "You can pass. Your shot will resolve with the group."}</p>${
     cards.length
       ? `<div class="cancel-options">${game.order
           .filter((i) => game.plans[i].action && !cancelled.has("a" + i))
@@ -235,6 +237,7 @@ function render() {
   const focused = document.activeElement;
   const key = focused?.closest("[data-do]")?.dataset;
   const focusName = focused?.getAttribute("name");
+  const previousPreview = app.querySelector(".reaction-board");
   app.innerHTML =
     screen === "home"
       ? home()
@@ -253,6 +256,8 @@ function render() {
                 : game.phase === "results"
                   ? results()
                   : score();
+  const currentPreview = app.querySelector(".reaction-board");
+  if (currentPreview && previousPreview?.dataset.reaction === currentPreview.dataset.reaction) currentPreview.open = previousPreview.open;
   const auto = screen === "game" ? automaticEvent(game, !autoplayPaused) : null;
   if ((isCpuTurn() || auto) && !document.hidden) {
     const revision = game.revision;
